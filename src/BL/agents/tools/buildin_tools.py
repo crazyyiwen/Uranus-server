@@ -1,0 +1,149 @@
+"""Virtual file system tools for agent state management.
+
+This module provides tools for managing a virtual filesystem stored in agent state,
+enabling context offloading and information persistence across agent interactions.
+"""
+
+from typing import Annotated
+
+from langchain_core.messages import ToolMessage
+from langchain_core.tools import InjectedToolCallId, tool
+from langgraph.prebuilt import InjectedState
+from langgraph.types import Command
+
+from ..prompts.context_prompts import (
+    LS_DESCRIPTION,
+    READ_FILE_DESCRIPTION,
+    WRITE_FILE_DESCRIPTION,
+    WRITE_TODOS_DESCRIPTION,
+)
+from ..states.state import DeepAgentState, Todo
+
+
+@tool(description=LS_DESCRIPTION)
+def ls(state: Annotated[DeepAgentState, InjectedState]) -> list[str]:
+    """List all files in the virtual filesystem."""
+    return list(state.get("files", {}).keys())
+
+
+@tool(description=READ_FILE_DESCRIPTION, parse_docstring=True)
+def read_file(
+    file_path: str,
+    state: Annotated[DeepAgentState, InjectedState],
+    offset: int = 0,
+    limit: int = 2000,
+) -> str:
+    """Read file content from virtual filesystem with optional offset and limit.
+
+    Args:
+        file_path: Path to the file to read
+        state: Agent state containing virtual filesystem (injected in tool node)
+        offset: Line number to start reading from (default: 0)
+        limit: Maximum number of lines to read (default: 2000)
+
+    Returns:
+        Formatted file content with line numbers, or error message if file not found
+    """
+    files = state.get("files", {})
+    if file_path not in files:
+        return f"Error: File '{file_path}' not found"
+
+    content = files[file_path]
+    if not content:
+        return "System reminder: File exists but has empty contents"
+
+    lines = content.splitlines()
+    start_idx = offset
+    end_idx = min(start_idx + limit, len(lines))
+
+    if start_idx >= len(lines):
+        return f"Error: Line offset {offset} exceeds file length ({len(lines)} lines)"
+
+    result_lines = []
+    for i in range(start_idx, end_idx):
+        line_content = lines[i][:2000]  # Truncate long lines
+        result_lines.append(f"{i + 1:6d}\t{line_content}")
+
+    return "\n".join(result_lines)
+
+
+@tool(description=WRITE_FILE_DESCRIPTION, parse_docstring=True)
+def write_file(
+    file_path: str,
+    content: str,
+    state: Annotated[DeepAgentState, InjectedState],
+    tool_call_id: Annotated[str, InjectedToolCallId],
+) -> Command:
+    """Write content to a file in the virtual filesystem.
+
+    Args:
+        file_path: Path where the file should be created/updated
+        content: Content to write to the file
+        state: Agent state containing virtual filesystem (injected in tool node)
+        tool_call_id: Tool call identifier for message response (injected in tool node)
+
+    Returns:
+        Command to update agent state with new file content
+    """
+    files = state.get("files", {})
+    files[file_path] = content
+    return Command(
+        update={
+            "files": files,
+            "messages": [
+                ToolMessage(f"Updated file {file_path}", tool_call_id=tool_call_id)
+            ],
+        }
+    )
+
+@tool(description=WRITE_TODOS_DESCRIPTION,parse_docstring=True)
+def write_todos(
+    todos: list[Todo], tool_call_id: Annotated[str, InjectedToolCallId]
+) -> Command:
+    """Create or update the agent's TODO list for task planning and tracking.
+
+    Args:
+        todos: List of Todo items with content and status
+        tool_call_id: Tool call identifier for message response
+
+    Returns:
+        Command to update agent state with new TODO list
+    """
+    return Command(
+        update={
+            "todos": todos,
+            "messages": [
+                ToolMessage(f"Updated todo list to {todos}", tool_call_id=tool_call_id)
+            ],
+        }
+    )
+
+
+@tool(parse_docstring=True)
+def read_todos(
+    state: Annotated[DeepAgentState, InjectedState],
+    tool_call_id: Annotated[str, InjectedToolCallId],
+) -> str:
+    """Read the current TODO list from the agent state.
+
+    This tool allows the agent to retrieve and review the current TODO list
+    to stay focused on remaining tasks and track progress through complex workflows.
+
+    Args:
+        state: Injected agent state containing the current TODO list
+        tool_call_id: Injected tool call identifier for message tracking
+
+    Returns:
+        Formatted string representation of the current TODO list
+    """
+    todos = state.get("todos", [])
+    if not todos:
+        return "No todos currently in the list."
+
+    result = "Current TODO List:\n"
+    for i, todo in enumerate(todos, 1):
+        status_emoji = {"pending": "⏳", "in_progress": "🔄", "completed": "✅"}
+        emoji = status_emoji.get(todo["status"], "❓")
+        result += f"{i}. {emoji} {todo['content']} ({todo['status']})\n"
+
+    return result.strip()

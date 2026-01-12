@@ -1,0 +1,23 @@
+fastapi==0.115.0
+requests>=2.32.5
+pydantic>=2.7.4,<3.0.0
+gunicorn==20.0.4
+uvicorn>=0.31.1
+pytest==7.4.3
+newrelic==9.12.0
+asyncinit == 0.2.4
+pydash == 8.0.3
+joblib == 1.4.2
+multipledispatch == 1.0.0
+
+langchain
+langgraph
+langchain_community
+langchain-openai
+langchain-anthropic
+langchain_tavily
+langchain_mcp_adapters
+deepagents
+python-dotenv
+tavily
+markdownify

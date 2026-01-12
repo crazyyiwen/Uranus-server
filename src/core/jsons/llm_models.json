@@ -1,0 +1,58 @@
+{
+    "returnValue": [
+        {
+            "code": "gpt-4o",
+            "name": "OpenAI GPT-4o"
+        },
+        {
+            "code": "gpt-4o-mini",
+            "name": "OpenAI GPT-4o mini"
+        },
+        {
+            "code": "gemini-2.0-flash-lite-001",
+            "name": "Gemini 2.0 Flash-Lite"
+        },
+        {
+            "code": "gemini-2.0-flash-001",
+            "name": "Gemini 2.0 Flash"
+        },
+        {
+            "code": "gpt-4.1-mini",
+            "name": "OpenAI GPT-4.1 mini"
+        },
+        {
+            "code": "o3-mini",
+            "name": "OpenAI o3 mini"
+        },
+        {
+            "code": "gpt-4.1",
+            "name": "OpenAI GPT-4.1"
+        },
+        {
+            "code": "gemini-2.5-pro",
+            "name": "Gemini 2.5 Pro"
+        },
+        {
+            "code": "gemini-2.5-flash",
+            "name": "Gemini 2.5 Flash"
+        },
+        {
+            "code": "gpt-5",
+            "name": "OpenAI GPT-5"
+        },
+        {
+            "code": "gpt-5-mini",
+            "name": "OpenAI GPT-5 mini"
+        },
+        {
+            "code": "gpt-5-nano",
+            "name": "OpenAI GPT-5 nano"
+        }
+    ],
+    "isSuccess": true,
+    "errors": null,
+    "exception": null,
+    "errorMessage": null,
+    "errorCode": null,
+    "correlationId": null
+}

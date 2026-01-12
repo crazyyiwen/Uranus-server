@@ -1,0 +1,1472 @@
+{
+  "agenticWorkflowId": "c3250b21-51eb-4b43-9b88-e9c3f472a4d3",
+  "bpc": "20210511",
+  "name": "giftandhospitality_orchestration",
+  "displayName": "GiftAndHospitality_Orchestration",
+  "description": "You are Gifts & Hospitality Assistant agent, your task is to guide casual user for Gifts and Hospitality Onboarding through project request creation.",
+  "fromModuleVersion": null,
+  "lastModifiedVersion": null,
+  "rebasedFromVersion": null,
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "name": "start",
+      "description": "Starting point of the workflow",
+      "position": {
+        "x": -884.2857142857144,
+        "y": -572.5714285714287
+      },
+      "deletable": false,
+      "selected": false,
+      "dragging": false,
+      "data": {},
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "label": "start",
+        "nodeType": "start"
+      },
+      "variableUpdates": [
+        {
+          "fieldName": "thread.messages",
+          "operation": "append",
+          "value": "{{nodeOutput.interface.inputs.message}}",
+          "role": "user"
+        },
+        {
+          "fieldName": "system.userQuery",
+          "operation": "set",
+          "value": "{{nodeOutput.interface.inputs.message}}"
+        },
+        {
+          "fieldName": "system.attachments",
+          "operation": "extend",
+          "value": "{{nodeOutput.interface.inputs.attachments}}"
+        }
+      ],
+      "width": 250,
+      "height": 95,
+      "positionAbsolute": {
+        "x": -884.2857142857144,
+        "y": -569.7142857142858
+      }
+    },
+    {
+      "id": "w17psjl",
+      "type": "agent",
+      "name": "supervisor_agent",
+      "description": "",
+      "position": {
+        "x": -405.7142857142857,
+        "y": -603.0714285714287
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "agentStrategy": "react",
+        "model": {
+          "code": "gpt-4.1",
+          "name": "OpenAI GPT-4.1"
+        },
+        "promptTemplate": [
+          {
+            "id": "f6a7b5dd-a564-49e7-8786-10bfe44a5266",
+            "role": "system",
+            "text": "You are a helpful AI assistant with access to tools. Use the available tools to help answer questions and complete tasks."
+          },
+          {
+            "id": "4e26cb16-d1a2-47e2-8020-c1141bee66fc",
+            "role": "user",
+            "text": "User Query: {{system.userQuery}}"
+          }
+        ],
+        "tools": [
+          {
+            "_id": "2c1652fd-6949-4cea-b397-1759e5075f51",
+            "name": "create_request",
+            "description": "Create a new gift or hospitality request. Use this when the user wants to initiate or submit a new request.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "tool-handoff",
+              "type": "handoff",
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              },
+              "settings": {
+                "nodeId": "kmwsj8g"
+              },
+              "returnDirect": false
+            }
+          },
+          {
+            "_id": "eb2e4cf0-a344-4252-a526-295971f1f39e",
+            "name": "summary",
+            "description": "Generate a summary or overview. Use this when the user asks for a summary of information.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "tool-handoff",
+              "type": "handoff",
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              },
+              "settings": {
+                "nodeId": "o6pclsh"
+              },
+              "returnDirect": false
+            }
+          },
+          {
+            "_id": "34fd2537-779d-4132-8c5a-2ab60a8f26f8",
+            "name": "getcurrency_and_showgifthospitalityview",
+            "description": "Get currency information and display gift/hospitality views. Use this when the user needs currency details or wants to view gift/hospitality information.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "tool-handoff",
+              "type": "handoff",
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              },
+              "settings": {
+                "nodeId": "81k8ot6"
+              },
+              "returnDirect": false
+            }
+          },
+          {
+            "_id": "2659e3de-4939-4ea0-a54f-75a333f5f183",
+            "name": "disclosure_id",
+            "description": "Handle disclosure ID operations. Use this when the user needs disclosure-related information.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "tool-handoff",
+              "type": "handoff",
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              },
+              "settings": {
+                "nodeId": "t07i7da"
+              },
+              "returnDirect": false
+            }
+          },
+          {
+            "_id": "5c904fd4-c205-4ed8-ab74-ac3a34c64904",
+            "name": "approval_status",
+            "description": "Check or retrieve the approval status of a request or get global codes. Use this when the user asks about approval state or global codes.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "tool-handoff",
+              "type": "handoff",
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              },
+              "settings": {
+                "nodeId": "txszqpi"
+              },
+              "returnDirect": false
+            }
+          },
+          {
+            "_id": "c962f4e6-7fb8-4f25-a263-6d1f87055a64",
+            "name": "estimate_spend",
+            "description": "Estimate the monetary spend and budget for gifts and hospitality. Use this when the user needs help calculating costs or determining spending amounts.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "tool-handoff",
+              "type": "handoff",
+              "schema": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+                "additionalProperties": false
+              },
+              "settings": {
+                "nodeId": "d69agxz"
+              },
+              "returnDirect": false
+            }
+          }
+        ],
+        "maxIterations": 5,
+        "includeThoughts": true,
+        "structuredOutput": {
+          "enable": false,
+          "name": "",
+          "description": "",
+          "schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      },
+      "data": {},
+      "variableUpdates": [
+        {
+          "fieldName": "thread.messages",
+          "operation": "append",
+          "value": "{{nodeOutput.text}}",
+          "role": "assistant"
+        }
+      ],
+      "width": 324,
+      "height": 156,
+      "selected": false,
+      "positionAbsolute": {
+        "x": -405.7142857142857,
+        "y": -603.0714285714287
+      },
+      "dragging": false
+    },
+    {
+      "id": "d69agxz",
+      "type": "agent",
+      "name": "estimate_spend",
+      "description": "",
+      "position": {
+        "x": 277.14285714285717,
+        "y": -403.2142857142857
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "agentStrategy": "react",
+        "model": {},
+        "promptTemplate": [
+          {
+            "id": "54f9884a-6830-4130-9e64-0558b12009df",
+            "role": "system",
+            "text": "You are a helpful AI assistant with access to tools. Use the available tools to help answer questions and complete tasks."
+          },
+          {
+            "id": "3f81aed2-a119-497a-b2de-fb53de86c559",
+            "role": "user",
+            "text": "User Query: {{system.userQuery}}"
+          }
+        ],
+        "tools": [
+          {
+            "_id": "90e0a9da-f5af-4f2b-8234-7296457e63ec",
+            "name": "currencyBudget",
+            "description": "Description:\nshow\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is to take user input for currency and budget.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c-currencyBudget-76",
+              "type": "mcp",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currencyBudget": {
+                    "description": "Description:\n\n\nNotes:\n",
+                    "type": "string"
+                  },
+                  "label_datamodel": {
+                    "description": "Description:\n\n\nNotes:\n",
+                    "type": "string"
+                  },
+                  "infoBannerDetails": {
+                    "description": "Description:\n\n\nNotes:\n",
+                    "type": "string"
+                  }
+                },
+                "condition": "Description:\nshow\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is to take user input for currency and budget."
+              },
+              "settings": {
+                "serverId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              },
+              "returnDirect": false,
+              "_meta": {
+                "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"73fc9e0e-7df0-4444-89a6-243d6dda8c53\",\"Version\":[0,0],\"Type\":\"partialView\",\"Name\":\"currencyBudget\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"show\",\"Instruction\":\"This partial view is to take user input for currency and budget.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"currencyBudget\":{\"Type\":\"data\",\"OverrideId\":\"currencyBudget\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"currencyBudget\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"},\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"infoBannerDetails\":{\"Type\":\"data\",\"OverrideId\":\"infoBannerDetails\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"infoBannerDetails\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"}}}",
+                "type": "partial-view",
+                "source": "current-module",
+                "moduleId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              }
+            }
+          },
+          {
+            "_id": "be8ce5f4-072b-4217-aa0b-35ef24b55acf",
+            "name": "getusercontext",
+            "description": "Get the current user context and system information. Use this to retrieve user profile data, session information, or system status.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c-getusercontext-35",
+              "type": "mcp",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "description": "Event to execute DAC policy in server function.",
+                    "type": "string"
+                  },
+                  "data": {
+                    "description": "Payload used to execute the function."
+                  },
+                  "additionalData": {
+                    "description": "Any additional data used by the function."
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get_user_context"
+              },
+              "settings": {
+                "serverId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              },
+              "returnDirect": false,
+              "_meta": {
+                "functionId": "8347eec6-dab3-47ec-acb0-278f9a15c338",
+                "type": "ssf-call",
+                "source": "current-module",
+                "moduleId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp",
+                "executor": {
+                  "module": "demo.demo_functions",
+                  "function": "execute_demo_function",
+                  "wrapper": "get_system_info"
+                }
+              }
+            }
+          },
+          {
+            "_id": "6d4c8e30-3763-4118-96eb-52b7183b31a5",
+            "name": "UpdateUserDecisionPoints",
+            "description": "Create or update user decision points and records. Use this when you need to save user preferences, decisions, or create new records in the system.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c-UpdateUserDecisionPoints-29",
+              "type": "mcp",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "description": "Event to execute DAC policy in server function.",
+                    "type": "string"
+                  },
+                  "data": {
+                    "description": "Payload used to execute the function."
+                  },
+                  "additionalData": {
+                    "description": "Any additional data used by the function."
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Update_User_Decision_Points"
+              },
+              "settings": {
+                "serverId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              },
+              "returnDirect": false,
+              "_meta": {
+                "functionId": "fd259582-26af-4ea3-998f-292e9fee5dac",
+                "type": "ssf-call",
+                "source": "current-module",
+                "moduleId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp",
+                "executor": {
+                  "module": "demo.demo_functions",
+                  "function": "execute_demo_function",
+                  "wrapper": "create_mock_record"
+                }
+              }
+            }
+          }
+        ],
+        "maxIterations": 5,
+        "includeThoughts": true,
+        "structuredOutput": {
+          "enable": false,
+          "name": "",
+          "description": "",
+          "schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      },
+      "data": {},
+      "variableUpdates": [
+        {
+          "fieldName": "thread.messages",
+          "operation": "append",
+          "value": "{{nodeOutput.text}}",
+          "role": "assistant"
+        }
+      ],
+      "width": 350,
+      "height": 128,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 277.14285714285717,
+        "y": -403.2142857142857
+      },
+      "dragging": false
+    },
+    {
+      "id": "txszqpi",
+      "type": "agent",
+      "name": "approval_status",
+      "description": "",
+      "position": {
+        "x": 278.57142857142867,
+        "y": -159.65227409336805
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "agentStrategy": "react",
+        "model": {},
+        "promptTemplate": [
+          {
+            "id": "430ef0cc-b215-40e3-aa5d-40126c3470dc",
+            "role": "system",
+            "text": "You are a helpful AI assistant with access to tools. Use the available tools to help answer questions and complete tasks."
+          },
+          {
+            "id": "ca6d4900-3c2a-414a-9db1-c671cc11f021",
+            "role": "user",
+            "text": "User Query: {{system.userQuery}}"
+          }
+        ],
+        "tools": [
+          {
+            "_id": "48cdbe8c-22ed-4a88-995d-f16077473a98",
+            "name": "GetGlobalCode",
+            "description": "Get global configuration codes and settings. Use this to retrieve system-wide configuration values or codes.",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c-GetGlobalCode-22",
+              "type": "mcp",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "description": "Event to execute DAC policy in server function.",
+                    "type": "string"
+                  },
+                  "data": {
+                    "description": "Payload used to execute the function."
+                  },
+                  "additionalData": {
+                    "description": "Any additional data used by the function."
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code"
+              },
+              "settings": {
+                "serverId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              },
+              "returnDirect": false,
+              "_meta": {
+                "functionId": "2a01b36f-08c8-4d22-91bc-af74df56f564",
+                "type": "ssf-call",
+                "source": "current-module",
+                "moduleId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp",
+                "executor": {
+                  "module": "demo.demo_functions",
+                  "function": "execute_demo_function",
+                  "wrapper": "greet_user"
+                }
+              }
+            }
+          }
+        ],
+        "maxIterations": 5,
+        "includeThoughts": true,
+        "structuredOutput": {
+          "enable": false,
+          "name": "",
+          "description": "",
+          "schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      },
+      "data": {},
+      "variableUpdates": [
+        {
+          "fieldName": "thread.messages",
+          "operation": "append",
+          "value": "{{nodeOutput.text}}",
+          "role": "assistant"
+        }
+      ],
+      "width": 263,
+      "height": 100,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 280.10899619314773,
+        "y": -159.65227409336805
+      },
+      "dragging": false
+    },
+    {
+      "id": "t07i7da",
+      "type": "agent",
+      "name": "disclosure_id",
+      "description": "",
+      "position": {
+        "x": 278.68042476457623,
+        "y": 9.222901222199987
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "agentStrategy": "react",
+        "model": {},
+        "promptTemplate": [
+          {
+            "id": "39aa42b6-1880-4b0f-8caa-e8b2eff18cdb",
+            "role": "system",
+            "text": "You are a helpful AI assistant with access to tools. Use the available tools to help answer questions and complete tasks."
+          },
+          {
+            "id": "a349eef2-181a-4326-9aea-d9e1523399b1",
+            "role": "user",
+            "text": "User Query: {{system.userQuery}}"
+          }
+        ],
+        "tools": [],
+        "maxIterations": 5,
+        "includeThoughts": true,
+        "structuredOutput": {
+          "enable": false,
+          "name": "",
+          "description": "",
+          "schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      },
+      "data": {},
+      "variableUpdates": [
+        {
+          "fieldName": "thread.messages",
+          "operation": "append",
+          "value": "{{nodeOutput.text}}",
+          "role": "assistant"
+        }
+      ],
+      "width": 250,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 278.68042476457623,
+        "y": 9.222901222199987
+      },
+      "dragging": false
+    },
+    {
+      "id": "81k8ot6",
+      "type": "agent",
+      "name": "getcurrency_and_showgifthopitalityview",
+      "description": "",
+      "position": {
+        "x": 277.14285714285717,
+        "y": 178.43668603486276
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "agentStrategy": "react",
+        "model": {},
+        "promptTemplate": [
+          {
+            "id": "af7b5845-74c5-4f36-86e7-35485dd01444",
+            "role": "system",
+            "text": "You are a helpful AI assistant with access to tools. Use the available tools to help answer questions and complete tasks."
+          },
+          {
+            "id": "305356ba-9ed3-4f71-a89a-d8367031f9c4",
+            "role": "user",
+            "text": "User Query: {{system.userQuery}}"
+          }
+        ],
+        "tools": [
+          {
+            "_id": "5f73ac43-1a16-4d8f-bc67-a50dcd51eb18",
+            "name": "GetMemory",
+            "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: GetMemory",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c-GetMemory-40",
+              "type": "mcp",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "description": "Event to execute DAC policy in server function.",
+                    "type": "string"
+                  },
+                  "data": {
+                    "description": "Payload used to execute the function."
+                  },
+                  "additionalData": {
+                    "description": "Any additional data used by the function."
+                  }
+                },
+                "required": [
+                  "data"
+                ],
+                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: GetMemory"
+              },
+              "settings": {
+                "serverId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              },
+              "returnDirect": false,
+              "_meta": {
+                "functionId": "d709f7c2-c9da-4f9a-ad0f-6439c95682cf",
+                "type": "ssf-call",
+                "source": "current-module",
+                "moduleId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              }
+            }
+          },
+          {
+            "_id": "fd923a0a-402b-465a-a16b-fb584f33d801",
+            "name": "giftsAndHospitality",
+            "description": "Description:\nshow\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nshow",
+            "type": "tool",
+            "config": {
+              "enabled": true,
+              "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c-giftsAndHospitality-74",
+              "type": "mcp",
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "giftAndHospitalityDetails": {
+                    "description": "Description:\n\n\nNotes:\n",
+                    "type": "string"
+                  }
+                },
+                "condition": "Description:\nshow\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nshow"
+              },
+              "settings": {
+                "serverId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              },
+              "returnDirect": false,
+              "_meta": {
+                "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"5c4081b2-25e2-499f-bae1-726257ad610d\",\"Version\":[0,0],\"Type\":\"partialView\",\"Name\":\"giftsAndHospitality\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"show\",\"Instruction\":\"show\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"giftAndHospitalityDetails\":{\"Type\":\"data\",\"OverrideId\":\"giftAndHospitalityDetails\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"giftAndHospitalityDetails\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"}}}",
+                "type": "partial-view",
+                "source": "current-module",
+                "moduleId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "toolId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+                "serverName": "module mcp"
+              }
+            }
+          }
+        ],
+        "maxIterations": 5,
+        "includeThoughts": true,
+        "structuredOutput": {
+          "enable": false,
+          "name": "",
+          "description": "",
+          "schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      },
+      "data": {},
+      "variableUpdates": [
+        {
+          "fieldName": "thread.messages",
+          "operation": "append",
+          "value": "{{nodeOutput.text}}",
+          "role": "assistant"
+        }
+      ],
+      "width": 350,
+      "height": 100,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 274.067721899419,
+        "y": 178.43668603486276
+      },
+      "dragging": false
+    },
+    {
+      "id": "o6pclsh",
+      "type": "agent",
+      "name": "summary",
+      "description": "",
+      "position": {
+        "x": 280.21799238629535,
+        "y": 390.14576237227016
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "agentStrategy": "react",
+        "model": {},
+        "promptTemplate": [
+          {
+            "id": "f70e600c-170c-470b-8341-0f8f01cba291",
+            "role": "system",
+            "text": "You are a helpful AI assistant with access to tools. Use the available tools to help answer questions and complete tasks."
+          },
+          {
+            "id": "fb37cd47-1ff6-432c-88b8-9c639dc9bb66",
+            "role": "user",
+            "text": "User Query: {{system.userQuery}}"
+          }
+        ],
+        "tools": [],
+        "maxIterations": 5,
+        "includeThoughts": true,
+        "structuredOutput": {
+          "enable": false,
+          "name": "",
+          "description": "",
+          "schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      },
+      "data": {},
+      "variableUpdates": [
+        {
+          "fieldName": "thread.messages",
+          "operation": "append",
+          "value": "{{nodeOutput.text}}",
+          "role": "assistant"
+        }
+      ],
+      "width": 250,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 280.21799238629535,
+        "y": 390.14576237227016
+      },
+      "dragging": false
+    },
+    {
+      "id": "kmwsj8g",
+      "type": "agent",
+      "name": "create_request",
+      "description": "",
+      "position": {
+        "x": 285.07142857142867,
+        "y": 600.7376721849325
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "agentStrategy": "react",
+        "model": {},
+        "promptTemplate": [
+          {
+            "id": "f69ec0a6-c761-4fb9-ad02-8f447e672d5d",
+            "role": "system",
+            "text": "You are a helpful AI assistant with access to tools. Use the available tools to help answer questions and complete tasks."
+          },
+          {
+            "id": "cbac7cdc-6ccc-46d0-ba14-55265bb3679a",
+            "role": "user",
+            "text": "User Query: {{system.userQuery}}"
+          }
+        ],
+        "tools": [],
+        "maxIterations": 5,
+        "includeThoughts": true,
+        "structuredOutput": {
+          "enable": false,
+          "name": "",
+          "description": "",
+          "schema": {
+            "type": "object",
+            "properties": {},
+            "required": [],
+            "additionalProperties": false
+          }
+        }
+      },
+      "data": {},
+      "variableUpdates": [
+        {
+          "fieldName": "thread.messages",
+          "operation": "append",
+          "value": "{{nodeOutput.text}}",
+          "role": "assistant"
+        }
+      ],
+      "width": 250,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 284.83069525145265,
+        "y": 600.7376721849325
+      },
+      "dragging": false
+    },
+    {
+      "id": "qbum79m",
+      "type": "output",
+      "name": "output",
+      "description": "",
+      "position": {
+        "x": 800.980965738329,
+        "y": -374.7142857142857
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "outputMapping": {
+          "messages": {
+            "type": "string",
+            "value": "{{thread.messages}}"
+          }
+        }
+      },
+      "data": {},
+      "width": 150,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 800.980965738329,
+        "y": -377.0756361450611
+      },
+      "dragging": false
+    },
+    {
+      "id": "esibu16",
+      "type": "output",
+      "name": "output",
+      "description": "",
+      "position": {
+        "x": 817.7852133840915,
+        "y": -159.65227409336805
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "outputMapping": {
+          "messages": {
+            "type": "string",
+            "value": "{{thread.messages}}"
+          }
+        }
+      },
+      "data": {},
+      "width": 150,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 817.7852133840915,
+        "y": -159.65227409336808
+      },
+      "dragging": false
+    },
+    {
+      "id": "y1dhe17",
+      "type": "output",
+      "name": "output",
+      "description": "",
+      "position": {
+        "x": 816.1386495692248,
+        "y": 390.14576237227016
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "outputMapping": {
+          "messages": {
+            "type": "string",
+            "value": "{{thread.messages}}"
+          }
+        }
+      },
+      "data": {},
+      "width": 150,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 816.1386495692248,
+        "y": 387.0706271288319
+      },
+      "dragging": false
+    },
+    {
+      "id": "lufgcgw",
+      "type": "output",
+      "name": "output",
+      "description": "",
+      "position": {
+        "x": 815.9206571829295,
+        "y": 178.43668603486276
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "outputMapping": {
+          "messages": {
+            "type": "string",
+            "value": "{{thread.messages}}"
+          }
+        }
+      },
+      "data": {},
+      "width": 150,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 815.9206571829295,
+        "y": 178.43668603486282
+      },
+      "dragging": false
+    },
+    {
+      "id": "3o0vh1w",
+      "type": "output",
+      "name": "output",
+      "description": "",
+      "position": {
+        "x": 814.8190743338009,
+        "y": 9.222901222199987
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "outputMapping": {
+          "messages": {
+            "type": "string",
+            "value": "{{thread.messages}}"
+          }
+        }
+      },
+      "data": {},
+      "width": 150,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 814.8190743338009,
+        "y": 9.222901222199958
+      },
+      "dragging": false
+    },
+    {
+      "id": "uaifarz",
+      "type": "output",
+      "name": "output",
+      "description": "",
+      "position": {
+        "x": 811.6349428972151,
+        "y": 600.7376721849325
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "outputMapping": {
+          "messages": {
+            "type": "string",
+            "value": "{{thread.messages}}"
+          }
+        }
+      },
+      "data": {},
+      "width": 150,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 811.6349428972151,
+        "y": 597.9605157447468
+      },
+      "dragging": false
+    },
+    {
+      "id": "oilnsuo",
+      "type": "output",
+      "name": "output",
+      "description": "",
+      "position": {
+        "x": 278.57142857142867,
+        "y": -560.5714285714287
+      },
+      "deletable": true,
+      "properties": {
+        "retryOnFailure": false,
+        "maxRetries": 6,
+        "retryInterval": 541,
+        "errorHandling": "none",
+        "errorObject": {
+          "body": "",
+          "status_code": 500,
+          "headers": {}
+        }
+      },
+      "config": {
+        "outputMapping": {
+          "messages": {
+            "type": "string",
+            "value": "{{thread.messages}}"
+          }
+        }
+      },
+      "data": {},
+      "width": 150,
+      "height": 71,
+      "selected": false,
+      "positionAbsolute": {
+        "x": 278.57142857142867,
+        "y": -562
+      },
+      "dragging": false
+    }
+  ],
+  "edges": [
+    {
+      "id": "reactflow__edge-start-w17psjl",
+      "source": "start",
+      "target": "w17psjl",
+      "style": {
+        "strokeWidth": 3
+      },
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {
+        "sourceType": "start",
+        "targetType": "agent"
+      }
+    },
+    {
+      "id": "w17psjl-handoff-2c1652fd-6949-4cea-b397-1759e5075f51",
+      "source": "w17psjl",
+      "target": "kmwsj8g",
+      "type": "handoff",
+      "sourceHandle": "handoff",
+      "targetHandle": null,
+      "deletable": false,
+      "data": {
+        "toolId": "2c1652fd-6949-4cea-b397-1759e5075f51",
+        "isHandoff": true,
+        "sourceType": "agent",
+        "targetType": "agent"
+      }
+    },
+    {
+      "id": "w17psjl-handoff-eb2e4cf0-a344-4252-a526-295971f1f39e",
+      "source": "w17psjl",
+      "target": "o6pclsh",
+      "type": "handoff",
+      "sourceHandle": "handoff",
+      "targetHandle": null,
+      "deletable": false,
+      "data": {
+        "toolId": "eb2e4cf0-a344-4252-a526-295971f1f39e",
+        "isHandoff": true,
+        "sourceType": "agent",
+        "targetType": "agent"
+      }
+    },
+    {
+      "id": "w17psjl-handoff-34fd2537-779d-4132-8c5a-2ab60a8f26f8",
+      "source": "w17psjl",
+      "target": "81k8ot6",
+      "type": "handoff",
+      "sourceHandle": "handoff",
+      "targetHandle": null,
+      "deletable": false,
+      "data": {
+        "toolId": "34fd2537-779d-4132-8c5a-2ab60a8f26f8",
+        "isHandoff": true,
+        "sourceType": "agent",
+        "targetType": "agent"
+      }
+    },
+    {
+      "id": "w17psjl-handoff-2659e3de-4939-4ea0-a54f-75a333f5f183",
+      "source": "w17psjl",
+      "target": "t07i7da",
+      "type": "handoff",
+      "sourceHandle": "handoff",
+      "targetHandle": null,
+      "deletable": false,
+      "data": {
+        "toolId": "2659e3de-4939-4ea0-a54f-75a333f5f183",
+        "isHandoff": true,
+        "sourceType": "agent",
+        "targetType": "agent"
+      }
+    },
+    {
+      "id": "w17psjl-handoff-5c904fd4-c205-4ed8-ab74-ac3a34c64904",
+      "source": "w17psjl",
+      "target": "txszqpi",
+      "type": "handoff",
+      "sourceHandle": "handoff",
+      "targetHandle": null,
+      "deletable": false,
+      "data": {
+        "toolId": "5c904fd4-c205-4ed8-ab74-ac3a34c64904",
+        "isHandoff": true,
+        "sourceType": "agent",
+        "targetType": "agent"
+      }
+    },
+    {
+      "id": "w17psjl-handoff-c962f4e6-7fb8-4f25-a263-6d1f87055a64",
+      "source": "w17psjl",
+      "target": "d69agxz",
+      "type": "handoff",
+      "sourceHandle": "handoff",
+      "targetHandle": null,
+      "deletable": false,
+      "data": {
+        "toolId": "c962f4e6-7fb8-4f25-a263-6d1f87055a64",
+        "isHandoff": true,
+        "sourceType": "agent",
+        "targetType": "agent"
+      }
+    },
+    {
+      "id": "reactflow__edge-d69agxz-qbum79m",
+      "source": "d69agxz",
+      "target": "qbum79m",
+      "style": {
+        "strokeWidth": 3
+      },
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {
+        "sourceType": "agent",
+        "targetType": "output"
+      }
+    },
+    {
+      "id": "reactflow__edge-txszqpi-esibu16",
+      "source": "txszqpi",
+      "target": "esibu16",
+      "style": {
+        "strokeWidth": 3
+      },
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {
+        "sourceType": "agent",
+        "targetType": "output"
+      }
+    },
+    {
+      "id": "reactflow__edge-t07i7da-3o0vh1w",
+      "source": "t07i7da",
+      "target": "3o0vh1w",
+      "style": {
+        "strokeWidth": 3
+      },
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {
+        "sourceType": "agent",
+        "targetType": "output"
+      }
+    },
+    {
+      "id": "reactflow__edge-81k8ot6-lufgcgw",
+      "source": "81k8ot6",
+      "target": "lufgcgw",
+      "style": {
+        "strokeWidth": 3
+      },
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {
+        "sourceType": "agent",
+        "targetType": "output"
+      }
+    },
+    {
+      "id": "reactflow__edge-o6pclsh-y1dhe17",
+      "source": "o6pclsh",
+      "target": "y1dhe17",
+      "style": {
+        "strokeWidth": 3
+      },
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {
+        "sourceType": "agent",
+        "targetType": "output"
+      }
+    },
+    {
+      "id": "reactflow__edge-kmwsj8g-uaifarz",
+      "source": "kmwsj8g",
+      "target": "uaifarz",
+      "style": {
+        "strokeWidth": 3
+      },
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {
+        "sourceType": "agent",
+        "targetType": "output"
+      }
+    },
+    {
+      "id": "reactflow__edge-w17psjl-oilnsuo",
+      "source": "w17psjl",
+      "target": "oilnsuo",
+      "style": {
+        "strokeWidth": 3
+      },
+      "sourceHandle": null,
+      "targetHandle": null,
+      "data": {
+        "sourceType": "agent",
+        "targetType": "output"
+      }
+    }
+  ],
+  "variables": {
+    "flow": [],
+    "system": []
+  },
+  "interface": {
+    "inputs": {
+      "query": {
+        "type": "string",
+        "description": "User query to process",
+        "required": true
+      }
+    },
+    "outputs": {
+      "response": {
+        "type": "string",
+        "description": "Final response to the user"
+      }
+    }
+  },
+  "security": {
+    "activities": [
+      {
+        "refId": "10400003",
+        "code": "10400003",
+        "name": "Create Contract"
+      }
+    ]
+  },
+  "isDisabled": false,
+  "publishChannels": [
+    {
+      "refId": "api",
+      "code": "api",
+      "name": "API",
+      "description": "Expose the agent as a REST API for system and app integrations"
+    },
+    {
+      "refId": "qi-ui",
+      "code": "qi-ui",
+      "name": "Qi UI",
+      "description": "Make your agent available in GEP’s Qi interface"
+    }
+  ],
+  "createdBy": "Kimi.Zhao@gep.com",
+  "createdOn": "2026-01-10T02:33:22.881Z",
+  "updatedBy": "Kimi.Zhao@gep.com",
+  "updatedOn": "2026-01-10T02:33:22.881Z",
+  "environment": "DEV",
+  "appId": "e2c84064-171f-4f1a-a29a-19e0ac610935",
+  "moduleId": "664683be-a9b9-4bd8-a9de-f7ce7a36161c",
+  "version": "007caf5e-fdde-4983-88b5-237b8a243c93"
+}
