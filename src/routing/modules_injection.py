@@ -1,9 +1,6 @@
-from api import duplication_check_api, recommendation_api, buyer_agent_api, deep_agent_mcp_api
+from api import common_agent_api
 
 # adding routers
 routers = [
-    recommendation_api.router,
-    duplication_check_api.router,
-    buyer_agent_api.router,
-    deep_agent_mcp_api.router
+    common_agent_api.router
 ]
