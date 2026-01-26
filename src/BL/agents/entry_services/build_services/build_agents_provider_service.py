@@ -21,7 +21,8 @@ class AgentFactoryProvider:
             AgentFactory: An instance of the requested Agent Factory."""
         if factory_type == AgentFactoryTypes.COMMON_REACT:
             return CommonReactAgentFactory()
-        # elif factory_type == AgentFactoryTypes.DEEP_AGENT:
-        #     return DeepAgentFactory()  # Commented out - deep_agent modules removed
+        elif factory_type == AgentFactoryTypes.DEEP_AGENT:
+            # return DeepAgentFactory()  # Commented out - deep_agent modules removed
+            pass
         else:
             raise ValueError(f"Unsupported factory type: {factory_type}")

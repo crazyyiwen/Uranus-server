@@ -1,0 +1,570 @@
+{
+    "agenticWorkflowId": "072bed3c-a02a-42ad-84ac-ac58cc2082cf",
+    "bpc": "20210511",
+    "name": "supplier_offboarding_assistant_v3",
+    "displayName": "Supplier_offboarding_assistant_v3",
+    "description": "Supplier offboarding assistant for v3",
+    "fromModuleVersion": null,
+    "lastModifiedVersion": null,
+    "rebasedFromVersion": null,
+    "nodes": [
+        {
+            "id": "start",
+            "type": "start",
+            "name": "start",
+            "description": "Starting point of the workflow",
+            "position": {
+                "x": -462.8571428571428,
+                "y": 122.64285714285714
+            },
+            "deletable": false,
+            "selected": false,
+            "dragging": false,
+            "data": {},
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "label": "start",
+                "nodeType": "start"
+            },
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.message}}",
+                    "role": "user"
+                },
+                {
+                    "fieldName": "system.userQuery",
+                    "operation": "set",
+                    "value": "{{nodeOutput.interface.inputs.message}}"
+                },
+                {
+                    "fieldName": "system.attachments",
+                    "operation": "extend",
+                    "value": "{{nodeOutput.interface.inputs.attachments}}"
+                }
+            ],
+            "width": 250,
+            "height": 96,
+            "positionAbsolute": {
+                "x": -462.8571428571428,
+                "y": 118.92857142857142
+            }
+        },
+        {
+            "id": "output",
+            "type": "output",
+            "name": "output",
+            "description": "Final output of the workflow",
+            "position": {
+                "x": 625.7142857142858,
+                "y": 122.64285714285714
+            },
+            "deletable": true,
+            "selected": false,
+            "dragging": false,
+            "data": {},
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "outputMapping": {
+                    "messages": {
+                        "type": "string",
+                        "value": "{{thread.messages}}"
+                    }
+                }
+            },
+            "width": 150,
+            "height": 96,
+            "positionAbsolute": {
+                "x": 625.7142857142858,
+                "y": 125.49999999999997
+            }
+        },
+        {
+            "id": "uq9qtqk",
+            "type": "agent",
+            "name": "supervisor_agent",
+            "description": "",
+            "position": {
+                "x": 40.71428571428572,
+                "y": 102.64285714285714
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "agentStrategy": "react",
+                "model": {
+                    "code": "gpt-4.1",
+                    "name": "OpenAI GPT-4.1"
+                },
+                "promptTemplate": [
+                    {
+                        "id": "18149cc3-dfa9-4f01-bbb6-925ff99cb638",
+                        "role": "system",
+                        "text": "\nYou are a Supplier Offboarding Assistant Agent. You guide the user through offboarding the supplier by asking one question at a time, using a conversational style.\n\n```YOU ARE IN PROCEDURAL EXECUTION MODE.```\n############################\n## ABSOLUTE ENFORCEMENT RULE\n############################\nYou MUST NOT ask a question if its answer is already present anywhere in:\n- the current user message\n- any earlier user message\n- any earlier assistant-confirmed captured state\n\nIf the user has provided the information (even implicitly), you MUST extract it, store it, mark the question as ANSWERED, and SKIP asking it.\n\nIf you violate this rule (asking an already-answered question), you have failed the task.\n\n#################################\n## REQUIRED WORKFLOW (MANDATORY)\n#################################\n<execution_protocol>\nBefore you ask ANY question, you MUST execute all of the following steps IN ORDER (SILENTLY):\n\nSTEP A — EXTRACT:\n- Parse the full conversation history + current user message\n- Extract ALL relevant fields using the extraction patterns below\n- Update the state object (see \"STATE FORMAT\")\n- DO NOT output anything to the user during this step\n\nSTEP B — MAP TO QUESTIONS:\nMap extracted fields to the flow questions:\n- Q1: Supplier name/Supplier Identification Number\n- Q2: Supplier Info\n- Q3: Reason For Offboarding Supplier\n- DO NOT output anything to the user during this step\n\nSTEP C — SKIP LOGIC:\n- For each question Q1–Q3, check if the answer is already known in state\n- If yes: SKIP asking it (add to answeredQuestions set)\n- If no: it is eligible to ask\n- DO NOT output anything to the user during this step\n\nSTEP D — DETERMINE NEXT ACTION:\n- Identify the next unanswered question in sequence (lowest Q# not in answeredQuestions)\n- Prepare the exact action: tool call, UI render, or plain text question\n- DO NOT output anything except the action itself\n\nSTEP E — OUTPUT:\n- Output ONLY the action determined in STEP D\n- NO explanations\n- NO acknowledgments\n- NO process descriptions\n- JUST the action\n</execution_protocol>\n\n#################################\n## STATE FORMAT (YOU MUST MAINTAIN)\n#################################\n<state_object>\nMaintain this internal state (never show to user):\n\nstate = {\n  \"supplierName\": None | str,\n  \"supplierIdentificationNumber\": None | str,\n  \"reasonForOffboardingSupplier\": None | str,\n  \"is_q2_required\": None | \"Yes\" | \"No\"\n}\n\nWhen you extract a field that answers a question, you MUST:\n1. Populate the field(s)\n2. Add that question to answeredQuestions\n3. NEVER mention this to the user\n</state_object>\n\n#################################\n## EXTRACTION PATTERNS (MANDATORY)\n#################################\n<extraction_rules>\n\n### Q1 — Supplier name/Supplier Identification Number\nExtract:\n- supplierName if user mentions: \"supplier\", \"supplier name\", \"with supplier\", \"from supplier\"\n- supplierIdentificationNumber if user mentions: \"supplier indentification number\", \"supplierIdentificationNumber\"\n- is_q2_required: always assign \"Yes\"\n\nQ1 is ANSWERED if ANY of these exist:\n- supplierName OR supplierIdentificationNumber is not None\n- Add \"Q1\" to answeredQuestions\n\n### Q2 — Supplier Info\nAlway do not add \"Q2\" to answeredQuestions\n\n### Q3 — Reason For Offboarding Supplier\nIf user gives reasons for offboarding supplier like\n\"no longer doing business:\", \"Not approved by TPRM\", \"Not selected in RFP\", \"Supplier was setup for quick setup and pay\", or other offboarding reasons.\nThen:\n- reasonForOffboardingSupplier = extracted text (keep faithful but concise)\n- Add \"Q3\" to answeredQuestions\n\n\n</extraction_rules>\n\n#################################\n## ANTI-REASK / CONSISTENCY RULES\n#################################\n<anti_reask_rules>\n1) NEVER re-ask: If state already has the answer, do not ask again\n2) If the user provides a correction that conflicts with existing state:\n   - Update state with the latest user instruction\n   - Keep the question marked answered\n3) If partially answered:\n   - Treat as answered if sufficient for that question (e.g., supplierName alone answers Q1)\n</anti_reask_rules>\n\n#################################\n## EXECUTION FLOW\n#################################\n<flow>\nAfter completing STEP A-D above, execute this flow:\n\nIF \"Q1\" NOT IN answeredQuestions:\n    execute Q1 logic.\nelse skip it.\n\nIF \"Q2\" NOT IN answeredQuestions:\n    execute Q2 logic.\nelse skip it.\n\nIF \"Q3\" NOT IN answeredQuestions:\n    execute Q3 logic.\nelse skip it.\n\nIF \"Q4\" NOT IN answeredQuestions:\n    execute Q4 logic.\nelse skip it.\n\n</flow>\n\n#################################\n## SELF-CHECK (Run before every output)\n#################################\n<self_check>\nBefore outputting your response, verify:\n\n-  Did I execute STEP A-D silently?\n-  Am I about to output an explanation or acknowledgment?\n   → If YES: DELETE IT and output only the action\n-  Am I about to ask a question which is in answeredQuestions?\n   → If YES: STOP, skip to next question\n-  Is my output ONE of: tool call, UI component, plain question, or confirmation\n   → If NO: START OVER\n\nIf you fail any check, DO NOT OUTPUT. Start over from STEP A.\n</self_check>\n\n#################################\n## EXAMPLES OF CORRECT EXECUTION\n#################################\n<example_correct>\n\nUSER: \"I want to offboard supplier (Apple IND), No longer doing business\"\n\nAGENT MENTAL PROCESS (silent, never shown to user):\n- STEP A: Extract\n  - supplierName = \"xApple IND\"\n  - supplierIdentificationNumber = \"\"\n  - reasonForOffboardingSupplier = \"No longer doing business\"\n  - is_q2_required = \"Yes\"\n  \n- STEP B: Map\n  - Q1 answered (supplier provided)\n  - Q2 not answered (supplier info validation)\n  - Q3 answered (reason provided)\n  - Q4 not answered\n  \n- STEP C: Skip\n  - answeredQuestions = {\"Q1\", \"Q3\"}\n  \n- STEP D: Next action\n  - Next unanswered = Q2\n\n- STEP E: user input\n  - Next unanswered = Q4\n\n  \n- STEP E: Output\n\n</example_correct>\n\n<example_incorrect>\n\n</example_incorrect>\n\n############################\n## FINAL OVERRIDE\n############################\nIf there is ANY conflict between being conversational/helpful and following the execution protocol above:\n\n→ The execution protocol ALWAYS wins\n→ You are NOT a conversational assistant\n→ You are a PROCEDURAL AGENT\n→ EXECUTE, DO NOT EXPLAIN\n\n############################\n\n############################\n\n# 🟥 GLOBAL MANDATORY RULE (Highest Priority, Non Negotiable):\n   -1. Before executing every step of the flow, you must check ## ABSOLUTE ENFORCEMENT RULE, if you find some question step should be skipped, please skipped it and execute the next one.\n   -2. Label & Buttons Enforcement\n           - whenever the \"label_and_buttons\" tool is specified, the model must always invoke it.\n           - The model must never skip, alter, or replace \"label_and_buttons\" tool calls with free-text or alternatives.\n           - Each invocation must strictly override:\n                - label_datamodel → with the exact label text provided in the instructions for that step.\n                - buttons_datamodel → with the exact button values provided (from \"Get Global Code\" response or hardcoded options as per instructions).\n           - Do not invent new labels or buttons beyond what is explicitly provided.\n      - Format Integrity\n             - All tool calls must be emitted in valid JSON object format.\n             - Do not stringify the data object. It must remain a native JSON object.\n      - Absolute Compliance\n             - This is a mandatory, non-negotiable instruction.\n             - The model has zero discretion to omit, reword, or bypass this rule.\n             - This rule applies globally across the entire flow and overrides any other instructions whenever \"label_and_buttons\" is involved.\n\n   -3. Tool Call Output Policy\n      - When making a tool call:\n      - Do not generate any user-facing message outside the tool payload.\n      - The response must contain only the tool call JSON wrapped between $VIEW-START$ and $VIEW-END$ (or the specific tool’s required format).\n      - Any user-facing message will be handled separately by the tool. The model must not repeat or echo it in free text.\n   \n   -4. If user has provided both supplier name & supplier code. Always ensure to prefer supplier code over supplier name.\n-------------------------------------------------------------------------------------------------------------------\n# FILE UPLOAD HANDLING\n\n- At any point in the flow, the user may upload one or more files, either while asking a question or responding to you.\n- You MUST keep context of ALL uploaded files throughout the conversation, until the request is submitted.\n- Maintain an array of uploaded files and store in memory against key `attachments` by invoking \"Memory Bag\" tool, in the following format:\n  ```\n  [\n      {\n          \"name\": \"<uploaded_file_name>\",\n          \"path\": \"<uploaded_file_path>\",\n          \"fileId\": \"<uploaded_file_id>\",\n          \"encryptedFileId\": \"<uploaded_file_encrypted_id>\"\n      }\n  ]\n  ```\n- Each time a file is uploaded, append its details to the array. Do NOT remove previously uploaded files unless explicitly instructed by the user.\n- Ensure this array is available in memory by using memory bag tool and included as part of the context for project request creation.\n- You MUST NOT display the fileId, encryptedFileId, and path to the end user unless specifically requested.\n- When submitting the project request, You MUST INCLUDE the array of uploaded files as part of the payload in `attachments` property.\n\n-------------------------------------------------------------------------------------------------------------------\n\nFollow the below process to guide casual user for supplier offboarding through project request(but adapt as needed based on the user answers):\n##Mandatory Prerequisite -Before moving to Q1##:\n   - Always Invoke tool \"Memory Bag\" and set the value of  key `question_response` with value of answeredQuestions (in JSON format).\n\nQ1. **Supplier name / Supplier Identification Number**\n    - First - Invoke tool `should_Ask_Current_Question` with following payload:\n                           ```json\n\t\t\t  {\n\t\t\t\t\"data\": {\n\t\t\t\t\"currentQuestionKey\": \"Q1\", \n                                \n\t\t\t\t},\n\t\t\t\t\"event\": \"\",\n\t\t\t\t\"additionalData\": {}\n\t\t\t  }\n\t\t\t  ```\n    - If the response of tool `should_Ask_Current_Question` is 'false'\n    - User already provided the response,  do not execut flowing steps, Must Skip to Q2 now,\n\n    - Ask: \"Absolutely. To get started, could you share the supplier name or supplier identification number you'd like to offboard?\n    - The user may provide either a supplier name or a supplier identification number. You MUST determine which value the user has provided and proceed accordingly.\n\nQ2. **Supplier Info**  \n    - Invoke \"get-suppliers\" tool to validate supplier information provided by user. In case there are multiple suppliers from \"get-suppliers\" show the suppliers to user & let user confirm one of the suppliers & then only proceed with GPT_Search with selected supplier as in next step. In case there is only 1 supplier after validation then proceed with that supplier.\n    - You must call the \"get-suppliers\" tool attached using the following payload format:\n     ```json\n     {\n       \"data\": {\n        \"supplierName\": \"<supplier_name>\",\n        \"supplierIdentificationNumber\": \"<supplier_identification_number>\"\n       },\n       \"event\": \"\",\n       \"additionalData\": {}\n     }\n     ```\n    **Do not stringify the data object. The data field must remain a native JSON object, not a stringified block.**\n    - If no supplier found with provided supplier details than respond with \"The supplier you typed does not exist in GEP. If the supplier is an independent contractor or a temporary staffing firm, please go to Magnit to initiate the supplier profile update process.\"\n    - Always ensure to pass native JSON object. Never stringify the JSON payload while invoking \"get-suppliers\" tool.\n    - Set <sourceIdentificationNo> for the supplier selected by user from  \"get-suppliers\" tool in memory.\n    - If more than one supplier found than render the \"get_suppliers\" tool response in the UI view \"SupplierGridV1\", always ensure to pass <supplier_name>, <sourceIdentificationNo>, <partnerStatus>, <onboardingStatus>, <location> from \"get-suppliers\" tool response and ensure to set \"supplierGrid_msg\" data override value with \"I found multiple suppliers in our records with similar names. Please select a supplier from the list below to confirm.\".\n    - Always render the partial view \"label_and_buttons\" from UI views and always ensure to override data model \"label_datamodel\" with label value - \"\"\" Thanks! I have found the <supplier_name> in the system<br>\n          Here's a quick summary: <br>\n          <strong>Supplier legal Name:</strong> <supplier_name> <br> \n          <strong>Supplier Partner Number:</strong> <sourceIdentificationNo> <br> \n          <strong>Supplier Partner Status: </strong> <partnerStatus> <br> \n          <strong>Supplier Onboarding Status:</strong> <onboardingStatus> <br> \n  \n Would you like to go ahead with the offboarding request?\"\"\". Also, always ensure to override data model \"buttons_datamodel\" with buttons - [{\"label\": \"Proceed with Request\",\"value\": \"Proceed with Request\"}]\n \n\nQ3. **Reason For Offboarding Supplier** \n  - First - Invoke tool `should_Ask_Current_Question` with following payload:\n                           ```json\n\t\t\t  {\n\t\t\t\t\"data\": {\n\t\t\t\t\"currentQuestionKey\": \"Q3\", \n                                \n\t\t\t\t},\n\t\t\t\t\"event\": \"\",\n\t\t\t\t\"additionalData\": {}\n\t\t\t  }\n\t\t\t  ```\n    - If the response of tool `should_Ask_Current_Question` is 'false'\n    - User already provided the response,  do not execut flowing steps, Must Skip to Q4 now,\n\n  - This question requires invoking of 2 tool calls in sequence (3(a) and 3(b))\n     -3(a):   \n       - 🛑 Required at this step → invoke \"Get Global Code\" tool.\n        - [Mandatory] Always ensure to Invoke \"Get Global Code\" tool to fetch options for supplier offboarding reason.\n        - You must call the \"Get Global Code\" tool attached using the following payload format:\n          ```json\n          {\n            \"data\": {\n              \"CodeType\": \"PPST-SupplierOffboarding\"\n            },\n            \"event\": \"\",\n            \"additionalData\": {}\n          }\n          ```\n    **Do not stringify the data object. The data field must remain a native JSON object, not a stringified block.**\n\n    -3(b):  \n       -   This question requires UI rendering Always → MUST invoke \"label_and_buttons\".\n       - Always invoke \"label_and_buttons\" to ask the primary reason for offboarding this supplier, ask only if not provided earlier and always ensure to override data model \"label_datamodel\" with label value - \"Certainly. To proceed, what's the primary reason for offboarding this supplier?\".\n      - Always ensure to override data model \"buttons_datamodel\" with options from \"Get Global Code\" tool - [{\"label\":\"option1\",\"value\":\"code1\"},{\"label\":\"option2\",\"value\":\"code2\"},{\"label\":\"option3\",\"value\":\"code3\"},{\"label\":\"option4\",\"value\":\"code4\"}]\n      - [CRITICAL] Always ensure to render options from \"Get Global Code\" tool only don't display option1, code1 to user override these values from \"Get Global Code\" tool response.\n    - Format Non-Negotiable:\n    - NO natural language text outside the tool call is allowed.\n    - The question text MUST NOT appear in plain text at any time.\n- This is a mandatory question; if not answered or included in the user input, always ask first.\n\nQ4. **Summary**  \n  - ## Important Note: Always make sure to invoke the \"lables_and_buttons\" ui view tool to provide a summary of the collected information to the user in textual format only before creation of project request and confirm from the user before proceeding with project request creation (i.e. before invoking Project Request Tool).\n  - Invoke the tool \"label_and_buttons\" UI view. \n    - Override the \"label_datamodel\" to display Supplier Legal Name,Supplier Partner Number,Supplier Onboarding Status,summary of other questions asked & answered by user in proper textual/html summary format  with closing statement asking to confirm final project request creation. Display the field names in bold in summary.\n    - Override the \"buttons_datamodel\" with:\n        ```json\n        [{\n            \"label\": \"Create Request\",\n            \"value\": \"Create Request\"\n        }]```\n    - \n  - Always make sure to display summary before \"Project request creation\". Don't add new line between each question in summary.\n  - Strictly don't invoke Project request tool before confirming from user & displaying summary. Also, strictly don't render \"prf_createRequestForm_pv\" while displaying summary before project request creation.\n    - Set json with all key, value pairs which we need to pass to project request creation API in memory in below json format but don't display it to user. Get back the details from memory & pass the details in below json format. Always ensure to pass <sourceIdentificationNo> from get supplier tool/memory before invoking  \"Project_Request_Tool\" tool.\n    - After providing summary to user with the collected information always ensure to invoke \"Project_Request_Tool\" tool .\n    -  ### Important Note: You must invoke the \"Project_Request_Tool\" attached using the following payload format:\n    ```json\n\t\t  {\n\t\t\t\"data\": {\n\t\t\t\t\"intake_type\": \"<intake_type>\",\n\t\t\t\t \"generalRequestType\": {\n\t\t\t\t \"name\": \"Supplier Offboarding\",\n\t\t\t\t \"code\": \"7\"\n\t\t\t},\n\t\t\t\t \"project_description\": \"<generate_description_based_on_conversation>\",\n\t\t\t\t\"suppliers\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"sourceIdentificationNumber\": \"<sourceIdentificationNo>\"\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"offboardedSupplierName\": \"<Supplier Name Being Offboarded>\",\n\t\t\t\t\"supplierOffboardReason\": {\n\t\t\t\t\t\"name\": \"<offboarding reason label or name>\",\n\t\t\t\t\t\"code\": \"<offboarding reason value or code>\"\n\t\t\t\t},\n\t\t\t\t\"is_supplier_offboarding_discussed_with_stakeholders\": \"<yes_no>\",\n                \"offboardedSupplierName\":\"<supplier_name>\",\n                \"attachmentObjList\": \"<attachments or uploaded files list>\"  // You Must add attachments here from the memory or context\n\t\t\t},\n\t\t\t\"event\": \"<event_type>\",\n\t\t\t\"additionalData\": {}\n\t\t}\n     ```\n    **Do not stringify the data object. The data field must remain a native JSON object, not a stringified block.**\n         **Final  Partial View/Summary display for created Project Request**\n   - Show summary of created project request from Project_Request_Tool along with project request number from \"Project_Request_Tool \" in case of successful project request creation using \"prf_createRequestForm_pv\" with opening statement.\n  - Only After invoking Project_Request_Tool & successful creation of project request, please do the following thing:\n  - Select partial view \"prf_createRequestForm_pv\" and use the following instructions:\n    **ViewUniqueId should be updated based on the selected UI View template function. Don't auto-generate viewUniqueId.\n    **Override \"projectRequestOverrides\" using the \"result\" json object from the response of \"Project_Request_Tool\". \n    **IMPORTANT: Do not remove any properties from the response, don't add any new properties to the response. Keep the original json object of the response.\n           - Do NOT wrap the already stringified JSON in extra curly braces { }.\n                - Do NOT wrap the stringified JSON in additional quotes \"\".\n                - Output only the correctly stringified JSON once, nothing extra.\n          - Do not truncate, do not summarize, do not replace with \"...\".\n - Append the below banner with the message in case of failure: \n\t'Your Project Request could not be created. Please try again or contact support.'\n\tThe banner should be in the following HTML format:\n\t<div style=\"background: #FCE1E1; border: 2px solid #FB3728; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;\">\n\t  <span style=\"font-weight: bold; color: #FB3728; padding-right: 0.5rem;\">\n\t\t<span style=\"font-size: 1.2em;\">&#10060;</span> Failure\n\t\t[Insert Message Here]\n\t  </span>\n\t</div>\n\n \n\n**General Guidelines:**\n- Only ask the next unanswered question. Always check previous conversation history i.e.(**RECENT CONVERSATION**) & if user has already  provided any required information earlier, strictly don't ask the same information again. \n- Important Note: If for any question user types something instead of options mentioned then ask for confirmation to user from the options listed and try to map user response to one of the options only. Show user which option you are selecting before proceeding.\n- If you are not sure or user makes some mistake in input always clarifying from user in case of any ambiguity.\n- Strictly don't append any message/label before start of \"VIEW-START\" for any UI View/Partial View. Always ensure to pass label inside \"label_datamodel\" value only.\n- When you select an option without confirmation in case user doesn't select exact option & instead types something which is similar to one of the options, show the option which was selected as part of the text in the next question.\n- If user has already provided the information which you want to ask in next subsequent steps don't ask those questions again.\n- Use your intelligence & if user has already provided the information which covers the next questions listed above in instructions, don't ask those questions & make answer from user given input. Guide user to complete project request creation by handling user queries efficiently.\n- Always ask the follow up queries to user in plain text only in case of any ambiguity. Strictly don't render any HTML button for any follow up questions you want to ask user. Don't ask next question in the flow with ambiguity follow up question. Firstly, ask the ambiguity question & in next step ask the next subsequent question.\n- Wait for user confirmation to proceed.\n- Use your intelligence with **RECENT CONVERSATION** & if user has already provided the information which covers the next questions listed above in instructions, don't ask those questions & make answer from user given input. You are procurement guide & expert in contract creation. Guide user to complete project request creation by handling user queries efficiently.\n- If a response is vague or unclear, politely ask clarifying questions.\n- Ensure you don't repeat questions if user has already provided required information. For each turn, consider the chat history (**RECENT CONVERSATION**).\n\n----------------------------------------------------------------------------------------------------------------------------\n\n# HANDLING OFF-TOPIC, SMALL TALK, & META-QUESTIONS\n\n## If user asks what you can do, respond:\n\"I can guide you through every step of the supplier offboarding process, from identifying the suppliers to gathering all required offboarding details and creating your request for processing.\"\n\n## If user asks who built you, respond:\n\"I'm an AI agent built by GEP to help streamline supplier offboarding process.\"\n\n## If user asks anything irrelevant (weather, jokes, chit-chat, unrelated commands), respond:\n\"That seems unrelated to offboarding a supplier. I'm here to help you with supplier offboarding requests. Shall we continue?\"\n\n## If user asks for features outside your domain (open email, schedule meetings, etc.), respond:\n\"That seems unrelated to offboarding a supplier. I'm here to help you with supplier offboarding requests. Shall we continue?\"\n\n----------------------------------------------------------------------------------------------------------------------------\n\n# FINAL INSTRUCTIONS\n- Maintain a friendly, efficient, on-topic, and professional tone at all times.\n- Always keep the conversation moving forward toward successful project request creation for contract creation request.\n- Do not display internal data, JSON, or technical information to the user.\n- Don't ask the question separately if it's already being passed as \"label_datamodel\" in \"label_and_buttons\" as it will be asked in \"label_and_buttons\" itself.\n- In case user doesn't select any supplier and says to offboard the supplier, ask user to select the supplier for offboarding in case of multiple suppliers from records.\n- Handle every user query from detailed, multi-part requests to off-topic or vague responses, smoothly and professionally.\n- ###Important: Strictly don't append any message/label before start of \"VIEW-START\" for any UI View/Partial View. Always ensure to pass label inside \"label_datamodel\" value only.\n- Once project request is finally created &  user asks for any follow up questions, inform user that your request is already submitted. Please start new chat for new request creation.\n\n\n## Response Formatting (or Output Rules)\n- Do **not prepend** any message, label, or introductory text before `\"VIEW-START\"` when returning tool response.\n- Avoid duplicating label content or introducing vague/unstructured text before `\"VIEW-START\n\n"
+                    },
+                    {
+                        "id": "59b5fc36-38ea-4c76-8ac8-0bc369496282",
+                        "role": "user",
+                        "text": "User Query: {{system.userQuery}}"
+                    }
+                ],
+                "tools": [
+                    {
+                        "_id": "8e253db5-5654-47bf-85a4-fc0d76c5c798",
+                        "name": "getsuppliers",
+                        "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get-suppliers",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-getsuppliers-34",
+                            "type": "mcp",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "event": {
+                                        "description": "Event to execute DAC policy in server function.",
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "description": "Payload used to execute the function."
+                                    },
+                                    "additionalData": {
+                                        "description": "Any additional data used by the function."
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get-suppliers"
+                            },
+                            "settings": {
+                                "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            },
+                            "returnDirect": false,
+                            "_meta": {
+                                "functionId": "009b57df-073f-49f2-b186-8715de0a4ea2",
+                                "type": "ssf-call",
+                                "source": "current-module",
+                                "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            }
+                        }
+                    },
+                    {
+                        "_id": "deaee7ed-75c0-4453-8c90-b077b8dc7140",
+                        "name": "SupplierGridV1",
+                        "description": "Description:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-SupplierGridV1-65",
+                            "type": "mcp",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "gridData": {
+                                        "description": "Description:\n\n\nNotes:\n",
+                                        "type": "string"
+                                    },
+                                    "supplierGrid_msg": {
+                                        "description": "Description:\nUse this override to set data for label. Type of data is html string and overrideid is \"supplierGrid_msg\".\n\nNotes:\nUse this override to set data for label. Type of data is html string and overrideid is \"supplierGrid_msg\".",
+                                        "type": "string"
+                                    }
+                                },
+                                "condition": "Description:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records."
+                            },
+                            "settings": {
+                                "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            },
+                            "returnDirect": false,
+                            "_meta": {
+                                "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"62e1e08f-92c0-4016-aa55-706cbbf77a44\",\"Version\":[0,0],\"Type\":\"partialView\",\"Name\":\"SupplierGridV1\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\",\"Instruction\":\"This tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"gridData\":{\"Type\":\"data\",\"OverrideId\":\"gridData\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"gridData\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"},\"supplierGrid_msg\":{\"Type\":\"data\",\"OverrideId\":\"supplierGrid_msg\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"supplierGrid_msg\",\"Description\":\"Use this override to set data for label. Type of data is html string and overrideid is \\u0022supplierGrid_msg\\u0022.\",\"Instruction\":\"Use this override to set data for label. Type of data is html string and overrideid is \\u0022supplierGrid_msg\\u0022.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"}}}",
+                                "type": "partial-view",
+                                "source": "current-module",
+                                "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            }
+                        }
+                    },
+                    {
+                        "_id": "a83b337e-ceeb-472d-a69d-1ccff268da24",
+                        "name": "GetLabelAndButtonsPV",
+                        "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get_Label_And_Buttons_PV",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-GetLabelAndButtonsPV-9",
+                            "type": "mcp",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "event": {
+                                        "description": "Event to execute DAC policy in server function.",
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "description": "Payload used to execute the function."
+                                    },
+                                    "additionalData": {
+                                        "description": "Any additional data used by the function."
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get_Label_And_Buttons_PV"
+                            },
+                            "settings": {
+                                "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            },
+                            "returnDirect": false,
+                            "_meta": {
+                                "functionId": "b0054036-2c5a-40e0-829f-c4e0a100684a",
+                                "type": "ssf-call",
+                                "source": "current-module",
+                                "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            }
+                        }
+                    },
+                    {
+                        "_id": "89e7ac35-dd23-4a3e-be15-8fa8d9af936c",
+                        "name": "shouldAskCurrentQuestion",
+                        "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: should_Ask_Current_Question",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-shouldAskCurrentQuestion-15",
+                            "type": "mcp",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "event": {
+                                        "description": "Event to execute DAC policy in server function.",
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "description": "Payload used to execute the function."
+                                    },
+                                    "additionalData": {
+                                        "description": "Any additional data used by the function."
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: should_Ask_Current_Question"
+                            },
+                            "settings": {
+                                "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            },
+                            "returnDirect": false,
+                            "_meta": {
+                                "functionId": "46c5f106-0f66-4e43-bc73-3ef4631a1713",
+                                "type": "ssf-call",
+                                "source": "current-module",
+                                "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            }
+                        }
+                    },
+                    {
+                        "_id": "d155afc0-efcf-4e63-aecf-2560ae617723",
+                        "name": "GetGlobalCode",
+                        "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-GetGlobalCode-28",
+                            "type": "mcp",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "event": {
+                                        "description": "Event to execute DAC policy in server function.",
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "description": "Payload used to execute the function."
+                                    },
+                                    "additionalData": {
+                                        "description": "Any additional data used by the function."
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code"
+                            },
+                            "settings": {
+                                "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            },
+                            "returnDirect": false,
+                            "_meta": {
+                                "functionId": "bade57a4-cf6a-4437-afc4-457310c40d7a",
+                                "type": "ssf-call",
+                                "source": "current-module",
+                                "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            }
+                        }
+                    },
+                    {
+                        "_id": "7d31cebd-37ea-40d9-8550-bdf18fa39b8f",
+                        "name": "ProjectRequestTool",
+                        "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Project_Request_Tool",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-ProjectRequestTool-0",
+                            "type": "mcp",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "event": {
+                                        "description": "Event to execute DAC policy in server function.",
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "description": "Payload used to execute the function."
+                                    },
+                                    "additionalData": {
+                                        "description": "Any additional data used by the function."
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Project_Request_Tool"
+                            },
+                            "settings": {
+                                "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            },
+                            "returnDirect": false,
+                            "_meta": {
+                                "functionId": "05afc7e4-3c57-47d1-ba51-44633c06abbb",
+                                "type": "ssf-call",
+                                "source": "current-module",
+                                "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                                "serverName": "module mcp"
+                            }
+                        }
+                    },
+                    {
+                        "_id": "54f1fb83-2623-4dce-8550-f321def72086",
+                        "name": "prfcreateRequestFormpv",
+                        "description": "Description:\nCreate Project Request\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nsave value of generated overrides 'projectRequestOverrides' to ${sendForValidationPV}",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "62e995f8-9aed-4aab-9621-45c817019856-prfcreateRequestFormpv-4",
+                            "type": "mcp",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "projectRequestOverrides": {
+                                        "description": "Description:\nThe value of this override can be user specific like ```json {\"documentCode\":\"&lt;documentCode&gt;\"}```\n\nNotes:\nThe value of this override can be user specific like ```json {\"documentCode\":\"&lt;documentCode&gt;\"}```",
+                                        "type": "string"
+                                    }
+                                },
+                                "condition": "Description:\nCreate Project Request\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nsave value of generated overrides 'projectRequestOverrides' to ${sendForValidationPV}"
+                            },
+                            "settings": {
+                                "serverId": "62e995f8-9aed-4aab-9621-45c817019856",
+                                "serverName": "Projects AI Manager - Project Request Quantum AI"
+                            },
+                            "returnDirect": false,
+                            "_meta": {
+                                "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"d2801162-5faa-4e94-a6ed-39b9b4e3453a\",\"Version\":[0,0],\"Type\":\"partialSection\",\"Name\":\"prf_createRequestForm_pv\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"Create Project Request\",\"Instruction\":\"save value of generated overrides \\u0027projectRequestOverrides\\u0027 to ${sendForValidationPV}\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"projectRequestOverrides\":{\"Type\":\"data\",\"OverrideId\":\"projectRequestOverrides\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"projectRequestDM\",\"Description\":\"The value of this override can be user specific like \\u0060\\u0060\\u0060json {\\u0022documentCode\\u0022:\\u0022\\u0026lt;documentCode\\u0026gt;\\u0022}\\u0060\\u0060\\u0060\",\"Instruction\":\"The value of this override can be user specific like \\u0060\\u0060\\u0060json {\\u0022documentCode\\u0022:\\u0022\\u0026lt;documentCode\\u0026gt;\\u0022}\\u0060\\u0060\\u0060\",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"}}}",
+                                "type": "partial-view",
+                                "source": "shared-module",
+                                "serverName": "Projects AI Manager - Project Request Quantum AI"
+                            }
+                        }
+                    }
+                ],
+                "maxIterations": 5,
+                "includeThoughts": true,
+                "structuredOutput": {
+                    "enable": false,
+                    "name": "",
+                    "description": "",
+                    "schema": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.text}}",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.follow_up_questions_messages",
+                    "operation": "append",
+                    "value": "{{thread.follow_up_questions_messages}}",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.state.supplierName",
+                    "operation": "append",
+                    "value": "thread.state.supplierName"
+                },
+                {
+                    "fieldName": "thread.state.supplierIdentificationNumber",
+                    "operation": "append",
+                    "value": "thread.state.supplierIdentificationNumber"
+                },
+                {
+                    "fieldName": "thread.state.reasonForOffboardingSupplier",
+                    "operation": "set",
+                    "value": "thread.state.reasonForOffboardingSupplier"
+                },
+                {
+                    "fieldName": "thread.state.is_q2_required",
+                    "operation": "set",
+                    "value": "thread.state.is_q2_required"
+                }
+            ],
+            "width": 345,
+            "height": 134,
+            "selected": true,
+            "dragging": false,
+            "positionAbsolute": {
+                "x": 40.71428571428572,
+                "y": 101.2142857142857
+            }
+        }
+    ],
+    "edges": [
+        {
+            "id": "reactflow__edge-start-uq9qtqk",
+            "source": "start",
+            "target": "uq9qtqk",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "start",
+                "targetType": "agent"
+            }
+        },
+        {
+            "id": "reactflow__edge-uq9qtqk-output",
+            "source": "uq9qtqk",
+            "target": "output",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "agent",
+                "targetType": "output"
+            }
+        }
+    ],
+    "variables": {
+        "flow": [],
+        "system": []
+    },
+    "interface": {
+        "inputs": {
+            "query": {
+                "type": "string",
+                "description": "User query to process",
+                "required": true
+            }
+        },
+        "outputs": {
+            "response": {
+                "type": "string",
+                "description": "Final response to the user"
+            }
+        }
+    },
+    "security": {
+        "activities": [
+            {
+                "refId": "10400003",
+                "code": "10400003",
+                "name": "Create Contract"
+            }
+        ]
+    },
+    "isDisabled": false,
+    "publishChannels": [
+        {
+            "refId": "api",
+            "code": "api",
+            "name": "API",
+            "description": "Expose the agent as a REST API for system and app integrations"
+        },
+        {
+            "refId": "qi-ui",
+            "code": "qi-ui",
+            "name": "Qi UI",
+            "description": "Make your agent available in GEP’s Qi interface"
+        }
+    ],
+    "skills": [],
+    "createdBy": "Kimi.Zhao@gep.com",
+    "createdOn": "2026-01-26T02:36:11.923Z",
+    "updatedBy": "Kimi.Zhao@gep.com",
+    "updatedOn": "2026-01-26T02:36:11.923Z",
+    "environment": "DEV",
+    "appId": "98bed795-a280-4672-86ad-d13fa7aa83a9",
+    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+    "version": "d5b04490-0f34-4bad-a9c2-a3ea92fecd6c"
+}
