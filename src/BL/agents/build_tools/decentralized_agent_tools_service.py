@@ -7,7 +7,7 @@ All tool behavior is defined in the workflow JSON through the _meta.executor con
 from typing import Dict, Any, Callable, Optional
 from langchain_core.tools import StructuredTool
 
-class DeepTools:
+class DecentralizedTools:
     @staticmethod
     def _map_json_type_to_python(json_type: str) -> type:
         """Map JSON schema types to Python types"""

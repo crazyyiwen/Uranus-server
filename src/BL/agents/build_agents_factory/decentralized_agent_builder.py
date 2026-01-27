@@ -5,7 +5,7 @@
 from core.interfaces.IAgentFactoryBuilder import AgentBuilder
 
 
-class DeepAgentBuilder(AgentBuilder):
+class DecentralizedAgentBuilder(AgentBuilder):
     """
     Builder for Deep Agents
     """

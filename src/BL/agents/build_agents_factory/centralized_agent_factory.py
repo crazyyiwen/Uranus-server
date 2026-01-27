@@ -2,10 +2,10 @@
 
 
 from core.interfaces.IAgentFactoryBuilder import AgentBuilder, AgentFactory
-from BL.agents.build_agents_factory.common_react_agent_builder import CommonReactAgent
+from BL.agents.build_agents_factory.centralized_agent_builder import CentralizedAgent
 
 
-class CommonReactAgentFactory(AgentFactory):
+class CentralizedAgentFactory(AgentFactory):
     """
     Factory to create Common React Agent Builder
     """
@@ -15,4 +15,4 @@ class CommonReactAgentFactory(AgentFactory):
         Returns:
             AgentBuilder: An instance of CommonReactAgent.
         """
-        return CommonReactAgent()
+        return CentralizedAgent()

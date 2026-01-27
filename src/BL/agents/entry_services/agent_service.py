@@ -10,7 +10,7 @@ from core.constant import AgentFactoryTypes, AGENTIC_WORKFLOW_JSON_PATH
 # Build agent from workflow JSON
 agent_graph: Any = None
 try:
-    factory = AgentFactoryProvider.get_factory(AgentFactoryTypes.COMMON_REACT)
+    factory = AgentFactoryProvider.get_factory(AgentFactoryTypes.CENTRALIZED_AGENT)
     builder = factory.create_agent_builder()
     agent_graph = builder.build_dynamic_agents(str(AGENTIC_WORKFLOW_JSON_PATH))
 except Exception as e:

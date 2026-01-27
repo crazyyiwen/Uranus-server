@@ -5,15 +5,11 @@ from typing import Dict, Any, Optional, List
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import AIMessage, SystemMessage, HumanMessage, ToolMessage, BaseMessage
 from langchain_openai import ChatOpenAI
-from langchain_core.tools import BaseTool
 
-from BL.agents.entry_services.build_services.build_tools.react_tools_service import (
-    build_agent_tool,
-    build_partial_view_tool,
-    build_ssf_call_tool
-)
+from BL.agents.build_tools.tools_factory_provider_service import ToolsFactoryProvider
 from BL.agents.states.state import CommonAgentState
 from BL.agents.agents_model.model_selection import get_dynamic_model_instance, get_default_model_name
+from core.constant import ToolsFactoryTypes
 
 
 class LangGraphAgentWorkflowBuilder:
@@ -23,6 +19,7 @@ class LangGraphAgentWorkflowBuilder:
 
     def __init__(self, workflow: Dict[str, Any]):
         self.workflow = workflow
+        self.centralized_tools = ToolsFactoryProvider().get_factory(ToolsFactoryTypes.CENTRALIZED_AGENT).create_tools_builder().build_dynamic_tools()
         self.nodes_by_id = {n["id"]: n for n in workflow["nodes"]}
         self.agent_nodes = {
             n["id"]: n for n in workflow["nodes"] if n["type"] == "agent"

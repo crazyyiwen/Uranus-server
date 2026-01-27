@@ -1,4 +1,4 @@
-from BL.agents.entry_services.common_react_agent_service import agent_invoke
+from BL.agents.entry_services.agent_service import agent_invoke
 from core.helper.exception_dispatch_service import catch_exception
 from fastapi import APIRouter, Request
 from core.models.return_model import ReturnModel

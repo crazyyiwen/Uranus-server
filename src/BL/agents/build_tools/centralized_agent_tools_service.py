@@ -11,7 +11,9 @@ from pydantic import BaseModel, Field, create_model
 import json
 import importlib
 
-class ReactTools:
+from core.interfaces.IToolsFactoryBuilder import Tools
+
+class CentralizedTools(Tools):
     @staticmethod
     def _map_json_type_to_python(json_type: str) -> type:
         """Map JSON schema types to Python types"""

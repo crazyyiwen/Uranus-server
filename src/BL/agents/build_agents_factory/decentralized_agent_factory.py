@@ -2,11 +2,11 @@
 
 
 from core.interfaces.IAgentFactoryBuilder import AgentBuilder
-from deep_agent_builder import DeepAgentBuilder
+from decentralized_agent_builder import DecentralizedAgentBuilder
 from core.interfaces.IAgentFactoryBuilder import AgentFactory
 
 
-class DeepAgentFactory(AgentFactory):
+class DecentralizedAgentFactory(AgentFactory):
     """
     Factory to create Deep Agent Builder
     """
@@ -15,4 +15,4 @@ class DeepAgentFactory(AgentFactory):
         Returns:
             AgentBuilder: An instance of DeepAgentBuilder.
         """
-        return DeepAgentBuilder()
+        return DecentralizedAgentBuilder()

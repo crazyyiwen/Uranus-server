@@ -5,7 +5,7 @@ from BL.agents.entry_services.build_services.build_agent_workflow_service import
 from core.interfaces.IAgentFactoryBuilder import AgentBuilder
 
 
-class CommonReactAgent(AgentBuilder):
+class CentralizedAgent(AgentBuilder):
     """
     Builder for Common React Agents
     """

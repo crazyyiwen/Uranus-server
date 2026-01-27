@@ -2,11 +2,11 @@ import os
 from pathlib import Path
 
 class AgentFactoryTypes:
-    COMMON_REACT = "common_react"
-    DEEP_AGENT = "agents"
+    CENTRALIZED_AGENT = "centralized_agent"
+    DECENTRALIZED_AGENT = "decentralized_agent"
 
 class ToolsFactoryTypes:
-    COMMON_REACT = "common_react"
-    DEEP_AGENT = "agents"
+    CENTRALIZED_AGENT = "centralized_agent"
+    DECENTRALIZED_AGENT = "decentralized_agent"
     
 AGENTIC_WORKFLOW_JSON_PATH = Path(__file__).parent / os.path.join("jsons", "agentic_workflow.json")
