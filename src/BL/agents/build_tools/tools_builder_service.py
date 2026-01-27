@@ -26,7 +26,7 @@ class CentralizedAgentToolsBuilder(ToolsBuilder):
             list: A list of tools for Centralized Agent.
         """
         # Implementation for building Centralized Agent tools goes here
-        pass
+        return DecentralizedTools()
     
 class DecentralizedAgentToolsBuilder(ToolsBuilder):
     """

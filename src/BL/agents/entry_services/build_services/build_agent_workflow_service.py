@@ -234,14 +234,14 @@ class LangGraphAgentWorkflowBuilder:
 
                 # SSF tools
                 if meta_type == "ssf-call":
-                    tool = build_ssf_call_tool(tool_json)
+                    tool = self.centralized_tools.build_ssf_call_tool(tool_json)
                     if tool:
                         tools.append(tool)
                     continue
 
                 # Partial views
                 if meta_type == "partial-view":
-                    tool = build_partial_view_tool(tool_json)
+                    tool = self.centralized_tools.build_partial_view_tool(tool_json)
                     if tool:
                         tools.append(tool)
                     continue
@@ -252,7 +252,7 @@ class LangGraphAgentWorkflowBuilder:
                 if target_agent_id:
                     # Recursively build the sub-agent
                     subgraph = self._build_agent_graph(target_agent_id)
-                    tool = build_agent_tool(name, description, subgraph)
+                    tool = self.centralized_tools.build_agent_tool(name, description, subgraph)
                     if tool:
                         tools.append(tool)
 

@@ -1,9 +1,8 @@
 
 
 
-from core.interfaces.IAgentFactoryBuilder import AgentBuilder
-from decentralized_agent_builder import DecentralizedAgentBuilder
-from core.interfaces.IAgentFactoryBuilder import AgentFactory
+from core.interfaces.IAgentFactoryBuilder import AgentBuilder, AgentFactory
+from BL.agents.build_agents_factory.decentralized_agent_builder import DecentralizedAgentBuilder
 
 
 class DecentralizedAgentFactory(AgentFactory):

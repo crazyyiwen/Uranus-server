@@ -16,6 +16,14 @@ class CentralizedAgentToolsFactory(ToolsFactory):
             ToolsBuilder: An instance of CentralizedAgentToolsBuilder.
         """
         return CentralizedAgentToolsBuilder()
+
+    def create_tools_builder_with_mcp(self) -> ToolsBuilder:
+        """
+        Create a CentralizedAgentToolsBuilder instance with MCP.
+        Returns:
+            ToolsBuilder: An instance of CentralizedAgentToolsBuilder.
+        """
+        pass
     
 class DecentralizedAgentToolsFactory(ToolsFactory):
     """
@@ -28,3 +36,11 @@ class DecentralizedAgentToolsFactory(ToolsFactory):
             ToolsBuilder: An instance of DecentralizedAgentToolsBuilder.
         """
         return DecentralizedAgentToolsBuilder()
+    
+    def create_tools_builder_with_mcp(self) -> ToolsBuilder:
+        """
+        Create a DecentralizedAgentToolsBuilder instance with MCP.
+        Returns:
+            ToolsBuilder: An instance of DecentralizedAgentToolsBuilder.
+        """
+        pass

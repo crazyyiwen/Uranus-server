@@ -1,3 +1,11 @@
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Load .env before any imports that use OPENAI_API_KEY or other env vars
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
 from fastapi import FastAPI
 from fastapi.security import HTTPBearer
 import uvicorn
