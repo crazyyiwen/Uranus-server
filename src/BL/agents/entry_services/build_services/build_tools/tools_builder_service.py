@@ -10,6 +10,7 @@ class CommonReactTools:
     """
     def build_dynamic_tools(self):
         """
+        
         Build and return the tools for Common React.
         Returns:
             list: A list of tools for Common React.
