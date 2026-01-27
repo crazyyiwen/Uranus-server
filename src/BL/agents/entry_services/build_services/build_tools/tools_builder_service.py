@@ -1,5 +1,8 @@
 
 
+from BL.agents.entry_services.build_services.build_tools.build_tools_service import ReactTools
+
+
 class CommonReactTools:
     """
     Common React Tools Builder
@@ -11,7 +14,7 @@ class CommonReactTools:
             list: A list of tools for Common React.
         """
         # Implementation for building Common React tools goes here
-        return ["Tool1", "Tool2", "Tool3"]
+        return ReactTools()
     
     def build_dynamic_tools_with_mcp(self):
         """
