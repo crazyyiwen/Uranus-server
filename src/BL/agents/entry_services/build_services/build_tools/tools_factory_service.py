@@ -16,3 +16,15 @@ class CommonReactToolsFactory(ToolsFactory):
             ToolsBuilder: An instance of CommonReactToolsBuilder.
         """
         return CommonReactTools()
+    
+class DeepAgentToolsFactory(ToolsFactory):
+    """
+    Factory to create Common React Tools Builder
+    """
+    def create_tools_builder(self) -> ToolsBuilder:
+        """
+        Create a CommonReactToolsBuilder instance.
+        Returns:
+            ToolsBuilder: An instance of CommonReactToolsBuilder.
+        """
+        return DeepAgentTools()
