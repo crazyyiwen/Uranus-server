@@ -1,16 +1,16 @@
 
 
 
-from core.interfaces.IToolsFactoryBuilder import ToolsFactory
+from core.interfaces.IToolsFactoryBuilder import ToolsBuilder, ToolsFactory
 
 
 class CommonReactToolsFactory(ToolsFactory):
     """
-    Factory to create Common React Agent Builder
+    Factory to create Common React Tools Builder
     """
-    def create_agent_builder(self) -> ToolsBuilder:
+    def create_tools_builder(self) -> ToolsBuilder:
         """
-        Create a CommonReactAgent instance.
+        Create a CommonReactToolsBuilder instance.
         Returns:
             ToolsBuilder: An instance of CommonReactToolsBuilder.
         """

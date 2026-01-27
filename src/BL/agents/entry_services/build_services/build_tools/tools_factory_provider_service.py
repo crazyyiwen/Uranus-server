@@ -1,7 +1,9 @@
 
 
 
+from BL.agents.entry_services.build_services.build_tools.tools_factory_service import CommonReactToolsFactory
 from core.constant import ToolsFactoryTypes
+from core.interfaces.IToolsFactoryBuilder import ToolsFactory
 
 
 class ToolsFactoryProvider:
@@ -15,11 +17,10 @@ class ToolsFactoryProvider:
         Args:
             factory_type (str): The type of agent factory to retrieve.
             Returns:
-            AgentFactory: An instance of the requested Agent Factory."""
+            ToolsFactory: An instance of the requested ToolsFactory."""
         if factory_type == ToolsFactoryTypes.COMMON_REACT:
-            pass
+            return CommonReactToolsFactory()
         elif factory_type == ToolsFactoryTypes.DEEP_AGENT:
-            # return DeepAgentFactory()  # Commented out - deep_agent modules removed
             pass
         else:
             raise ValueError(f"Unsupported factory type: {factory_type}")
