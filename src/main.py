@@ -1,16 +1,13 @@
-from pathlib import Path
-
-from dotenv import load_dotenv
-
-# Load .env before any imports that use OPENAI_API_KEY or other env vars
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-load_dotenv(Path(__file__).resolve().parent / ".env")
-
 from fastapi import FastAPI
 from fastapi.security import HTTPBearer
 import uvicorn
+
+from middleware.load_env import load_env
+
+# Load .env before any import that builds agents (agent_service needs OPENAI_API_KEY)
+load_env()
+
 from middleware.register_middleware import register_middlewares
-import routing.modules_injection as modules_injection
 
 app = FastAPI(swagger_ui_parameters={"syntaxHighlight": False})
 app.title = 'Uranus_server'
