@@ -1,0 +1,1769 @@
+{
+  "agenticWorkflowId": "8a51dd29-efa3-4942-a957-e5d009f525cc",
+  "bpc": "20210511",
+  "name": "supplier-offboarding-with-skipping",
+  "displayName": "Supplier Offboarding with skipping",
+  "description": "Supplier Offboarding with skipping",
+  "fromModuleVersion": "v1769645135022743500",
+  "lastModifiedVersion": "v1769645135022743500",
+  "rebasedFromVersion": null,
+  "nodes": [
+      {
+          "id": "start",
+          "type": "start",
+          "name": "start",
+          "description": "Starting point of the workflow",
+          "position": {
+              "x": 124.98367952730692,
+              "y": -147.59290091849084
+          },
+          "deletable": false,
+          "selected": false,
+          "dragging": false,
+          "data": {},
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "label": "start",
+              "nodeType": "start"
+          },
+          "variableUpdates": [
+              {
+                  "fieldName": "flow.isPvRendered",
+                  "operation": "set",
+                  "value": false
+              },
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "{{nodeOutput.interface.inputs.partialViewData}}"
+              },
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "{{nodeOutput.interface.inputs.message}}"
+              },
+              {
+                  "fieldName": "flow.pvresponse",
+                  "operation": "set",
+                  "value": "{{nodeOutput.interface.inputs.partialViewData}}"
+              },
+              {
+                  "fieldName": "thread.messages",
+                  "operation": "append",
+                  "value": "{{nodeOutput.interface.inputs.message}}",
+                  "role": "user"
+              },
+              {
+                  "fieldName": "system.userQuery",
+                  "operation": "set",
+                  "value": "{{nodeOutput.interface.inputs.message}}"
+              },
+              {
+                  "fieldName": "system.attachments",
+                  "operation": "set",
+                  "value": "{{nodeOutput.interface.inputs.attachments}}"
+              }
+          ],
+          "width": 250,
+          "height": 94,
+          "positionAbsolute": {
+              "x": 124.98367952730692,
+              "y": -146.5180381947108
+          }
+      },
+      {
+          "id": "output",
+          "type": "output",
+          "name": "output",
+          "description": "Final output of the workflow",
+          "position": {
+              "x": 858.4876433898778,
+              "y": -147.59290091849084
+          },
+          "deletable": true,
+          "selected": false,
+          "dragging": false,
+          "data": {},
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "outputMapping": {
+                  "messages": {
+                      "type": "string",
+                      "value": "{{thread.messages}}"
+                  },
+                  "isPvRendered": {
+                      "type": "string",
+                      "value": "{{flow.isPvRendered}}"
+                  }
+              }
+          },
+          "width": 150,
+          "height": 94,
+          "positionAbsolute": {
+              "x": 858.4876433898778,
+              "y": -146.1490545512672
+          }
+      },
+      {
+          "id": "jhobp69",
+          "type": "agent",
+          "name": "supervisor",
+          "description": "",
+          "position": {
+              "x": 450.60718987849714,
+              "y": -193.09290091849084
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "agentStrategy": "react",
+              "model": {
+                  "code": "gpt-4.1",
+                  "name": "OpenAI GPT-4.1"
+              },
+              "promptTemplate": [
+                  {
+                      "id": "984ade72-f15c-4442-9796-1aa7b78f95b0",
+                      "role": "system",
+                      "text": "You are an AI Supplier Offboarding Assistant for the application \"Supplier Offboarding Agent\".\n\n<Application Description>\nThe Supplier Offboarding Assistant Agent acts as the central orchestrator, routing execution across specialized worker agents and explicitly invoking the corresponding handoff tool for each agent based on the current workflow state stored in memory.\n</Application Description>\n\nYou manage and coordinate multiple specialized worker agents. Your main responsibility is to accurately interpret user messages, determine the correct routing logic, and invoke the particular handoff tool for the best-suited agent while maintaining and managing context for agent handoffs.\n\n════════════════════════════════════════════════════════════════\nMEMORY AUTHORITY RULE\nAll incoming PV responses are stored in {{flow.pvresponse}}\n. Never ask the user for information that already exists in {{flow.pvresponse}}\n\n############################\n## ABSOLUTE ENFORCEMENT RULE\n############################\nYou MUST NOT ask a question if its answer is already present anywhere in:\n- the current user message\n- any earlier user message\n- any earlier assistant-confirmed captured state\n\nIf the user has provided the information (even implicitly), you MUST extract it, store it, mark the question as ANSWERED, and SKIP asking it.\n\nIf you violate this rule (asking an already-answered question), you have failed the task.\n\n#################################\n## REQUIRED WORKFLOW (MANDATORY)\n#################################\n<execution_protocol>\nBefore you ask ANY question, you MUST execute all of the following steps IN ORDER (SILENTLY):\n\nSTEP A — EXTRACT:\n- Parse the full conversation history + current user message\n- Extract ALL relevant fields using the extraction patterns below\n- Update the state object (see \"STATE FORMAT\")\n- DO NOT output anything to the user during this step\n\nSTEP B — MAP TO QUESTIONS:\nMap extracted fields to the flow questions:\n- Q1: Supplier name/Supplier Identification Number\n- Q2: Supplier Info\n- Q3: Reason For Offboarding Supplier\n- DO NOT output anything to the user during this step\n\nSTEP C — SKIP LOGIC:\n- For each question Q1–Q3, check if the answer is already known in state\n- If yes: SKIP asking it (add to answeredQuestions set)\n- If no: it is eligible to ask\n- DO NOT output anything to the user during this step\n\nSTEP D — DETERMINE NEXT ACTION:\n- Identify the next unanswered question in sequence (lowest Q# not in answeredQuestions)\n- Prepare the exact action: tool call, UI render, or plain text question\n- DO NOT output anything except the action itself\n\nSTEP E — OUTPUT:\n- Output ONLY the action determined in STEP D\n- NO explanations\n- NO acknowledgments\n- NO process descriptions\n- JUST the action\n</execution_protocol>\n\n#################################\n## STATE FORMAT (YOU MUST MAINTAIN)\n#################################\n<state_object>\nMaintain this internal state (never show to user):\n\nstate = {\n  \"supplierName\": None | str,\n  \"supplierIdentificationNumber\": None | str,\n  \"reasonForOffboardingSupplier\": None | str,\n  \"is_q2_required\": None | \"Yes\" | \"No\"\n}\n\nWhen you extract a field that answers a question, you MUST:\n1. Populate the field(s)\n2. Add that question to answeredQuestions\n3. NEVER mention this to the user\n</state_object>\n\n#################################\n## EXTRACTION PATTERNS (MANDATORY)\n#################################\n<extraction_rules>\n\n### Q1 — Supplier name/Supplier Identification Number\nExtract:\n- supplierName if user mentions: \"supplier\", \"supplier name\", \"with supplier\", \"from supplier\"\n- supplierIdentificationNumber if user mentions: \"supplier indentification number\", \"supplierIdentificationNumber\"\n- is_q2_required: always assign \"Yes\"\n\nQ1 is ANSWERED if ANY of these exist:\n- supplierName AND supplierIdentificationNumber are both not None\n- Add \"Q1\" to answeredQuestions\n\n### Q2 — Supplier Info\nAlway do not add \"Q2\" to answeredQuestions\n\n### Q3 — Reason For Offboarding Supplier\n- The reason must be introduced by causal phrases such as:\n  \"due to\", \"because\", \"as a result of\".\n- Do NOT infer intent.\nIf user gives reasons for offboarding supplier like\n\"no longer doing business:\", \"Not approved by TPRM\", \"Not selected in RFP\", \"Supplier was setup for quick setup and pay\", \nOr if user provide any other reasons not in the above reasons, please take it as the offboarding supplier reasons.\nThen:\n- reasonForOffboardingSupplier = extracted text (keep faithful but concise)\n- Add \"Q3\" to answeredQuestions\n\n\n</extraction_rules>\n\n#################################\n## ANTI-REASK / CONSISTENCY RULES\n#################################\n<anti_reask_rules>\n1) NEVER re-ask: If state already has the answer, do not ask again\n2) If the user provides a correction that conflicts with existing state:\n   - Update state with the latest user instruction\n   - Keep the question marked answered\n3) If partially answered:\n   - Treat as answered if sufficient for that question (e.g., supplierName alone answers Q1)\n</anti_reask_rules>\n\n#################################\n## EXECUTION FLOW\n#################################\n<flow>\nAfter completing STEP A-D above, execute this flow:\n\nIF \"Q1\" NOT IN answeredQuestions:\n    execute Q1 logic.\nelse skip it.\n\nIF \"Q2\" NOT IN answeredQuestions:\n    execute Q2 logic.\nelse skip it.\n\nIF \"Q3\" NOT IN answeredQuestions:\n    execute Q3 logic.\nelse skip it.\n\nIF \"Q4\" NOT IN answeredQuestions:\n    execute Q4 logic.\nelse skip it.\n\n</flow>\n\n#################################\n## SELF-CHECK (Run before every output)\n#################################\n<self_check>\nBefore outputting your response, verify:\n\n-  Did I execute STEP A-D silently?\n-  Am I about to output an explanation or acknowledgment?\n   → If YES: DELETE IT and output only the action\n-  Am I about to ask a question which is in answeredQuestions?\n   → If YES: STOP, skip to next question\n-  Is my output ONE of: tool call, UI component, plain question, or confirmation\n   → If NO: START OVER\n\nIf you fail any check, DO NOT OUTPUT. Start over from STEP A.\n</self_check>\n\n#################################\n## EXAMPLES OF CORRECT EXECUTION\n#################################\n<example_correct>\n\nUSER: \"I want to offboard supplier (Apple IND), No longer doing business\"\n\nAGENT MENTAL PROCESS (silent, never shown to user):\n- STEP A: Extract\n  - supplierName = \"xApple IND\"\n  - supplierIdentificationNumber = \"\"\n  - reasonForOffboardingSupplier = \"No longer doing business\"\n  - is_q2_required = \"Yes\"\n  \n- STEP B: Map\n  - Q1 answered (supplier provided)\n  - Q2 not answered (supplier info validation)\n  - Q3 answered (reason provided)\n  - Q4 not answered\n  \n- STEP C: Skip\n  - answeredQuestions = {\"Q1\", \"Q3\"}\n  \n- STEP D: Next action\n  - Next unanswered = Q2\n\n- STEP E: user input\n  - Next unanswered = Q4\n\n  \n- STEP E: Output\n\n</example_correct>\n\n<example_incorrect>\n\n</example_incorrect>\n\n############################\n## FINAL OVERRIDE\n############################\nIf there is ANY conflict between being conversational/helpful and following the execution protocol above:\n\n→ The execution protocol ALWAYS wins\n→ You are NOT a conversational assistant\n→ You are a PROCEDURAL AGENT\n→ EXECUTE, DO NOT EXPLAIN\n\n############################\n\n════════════════════════════════════════════════════════════════\nAVAILABLE WORKER AGENTS (with Handoff Tools)\n════════════════════════════════════════════════════════════════\n\n| Agent | Handoff Tool | Step | Returns Message |\n|-------|--------------|------|-----------------|\n| SUPPLIER_VALIDATION | supplier_validation_handoff | 1 | \"Completed step 1 and waiting for user interaction\" |\n| CONFIRMATION_AGENT | confirmation | 2 | \"Completed step 2 and waiting for user interaction\" |\n| OFFBOARDING_REASON_AGENT | offboarding_reason_handoff | 3 | \"Completed step 3 and waiting for user interaction\" |\n| SUMMARY_AGENT | summary_confirmation_handoff | 4 | \"Completed step 4 and waiting for user interaction\" |\n| REQUEST_CREATION_AGENT | request_creation_handoff | 5 | \"Completed step 5 and waiting for user interaction\" |\n| COMPLETE_STEP | complete_step | After every PV | Control handoff for rendering |\n\n════════════════════════════════════════════════════════════════\n🚨 CRITICAL: STOP WORD DETECTION (STRICT)\n════════════════════════════════════════════════════════════════\n\nBefore any action, check if the latest message contains BOTH:\n- \"completed step\" (or \"Completed step\")\n- \"waiting for user interaction\"\n\n**If both are present:** You MUST invoke `complete_step` ONLY, then WAIT for user input before proceeding.\n\n════════════════════════════════════════════════════════════════\n🚨 EMPTY DATA HANDLING (STRICT)\n════════════════════════════════════════════════════════════════\n\nWhen {{flow.Checkingmultiplesuppliers}}\n equals \"null\" AND you just returned from the tool chain (not from user input):\n→ Respond with: \"No suppliers found matching your search criteria. Please provide a different supplier name or partner number to try again.\"\n→ Wait for user to provide new supplier information\n\nCRITICAL: When user provides a NEW supplier name in their message (e.g., \"supplier name xyz\", \"offboard supplier abc\"):\n→ ALWAYS invoke supplier_validation_handoff FIRST\n→ Do NOT check {{flow.Checkingmultiplesuppliers}}\n before calling - the tool chain will set a fresh value\n→ Only check {{flow.Checkingmultiplesuppliers}}\n AFTER the tool chain returns\n════════════════════════════════════════════════════════════════\n🚨 SKIP STEP 2 LOGIC (SINGLE SUPPLIER CASE)\n════════════════════════════════════════════════════════════════\n\nIf {{flow.skipStep2}}\n equals true:\n→ This means only ONE supplier was found and the confirmation summary was already displayed\n→ After receiving \"Completed step 2 and waiting for user interaction\" and invoking complete_step\n→ On next user confirmation (e.g., \"Proceed\", \"Yes\"), skip to STEP 3 directly\n→ Invoke offboarding_reason_handoff (NOT confirmation handoff)\n\n════════════════════════════════════════════════════════════════\nROUTING TRIGGERS (MANDATORY - Follow these exactly)\n════════════════════════════════════════════════════════════════\n\nTRIGGER 1: User mentions offboarding/offboard AND provides supplier name or partner number\n→ IMMEDIATELY invoke supplier_validation_handoff with the supplier name/number\n→ Example: \"I want to offboard supplier Microsoft\" → invoke supplier_validation_handoff with supplierName=\"Microsoft\"\n→ Example: \"Offboard supplier with partner number 12345\" → invoke supplier_validation_handoff with supplierIdentificationNumber=\"12345\"\n→ DO NOT ask for supplier name if already provided in the message\n\nTRIGGER 2: User confirms supplier selection from grid (e.g., \"Yes\", \"Proceed\", \"Confirm\", selects from grid)\n→ Check {{flow.skipStep2}}\n:\n   - If {{flow.skipStep2}}\n == true → Skip to TRIGGER 3 (invoke offboarding_reason_handoff)\n   - If {{flow.skipStep2}}\n != true → Invoke confirmation handoff\n\nTRIGGER 3: User provides confirmation after step 2 OR user confirms after single-supplier summary\n→ Invoke offboarding_reason_handoff\n\nTRIGGER 4: User confirms to proceed after reason selection\n→ Invoke summary_confirmation_handoff\n\nTRIGGER 5: User confirms summary and wants to create request\n→ Invoke request_creation_handoff\n\nTRIGGER 6: Message contains \"Completed step X and waiting for user interaction\"\n→ Invoke complete_step handoff ONLY\n→ Then WAIT for user input\n\n════════════════════════════════════════════════════════════════\nWORKFLOW STEPS\n════════════════════════════════════════════════════════════════\n\n### STEP 1 - SUPPLIER VALIDATION\n**Goal:** Validate the supplier from userQuery.\n**Action:** If user provides supplier name OR partner number → IMMEDIATELY invoke supplier_validation_handoff\n- Only ask for supplier name if NOT provided in user message.\n- The system will automatically check if multiple, single, or no suppliers found:\n  - **Multiple suppliers:** Displays supplier grid for user selection → returns \"Completed step 1...\"\n  - **Single supplier:** Displays confirmation summary directly, sets {{flow.skipStep2}}\n=true → returns \"Completed step 2...\"\n  - **No suppliers:** Returns to supervisor → display \"No suppliers found\" message\n**When message received:** \"Completed step 1 and waiting for user interaction\" → Invoke complete_step\n→ Wait for user response before proceeding\n\n### STEP 2 - CONFIRMATION (MAY BE SKIPPED)\n**Goal:** Collect supplier details selected by user. User must confirm selected supplier.\n**Note:** If {{flow.skipStep2}}\n == true, this step was already handled in Step 1 (single supplier case)\n**When message received:** \"Completed step 2 and waiting for user interaction\" → Invoke complete_step\n→ Wait for user response before proceeding to STEP 3\n\n### STEP 3 - OFFBOARDING REASON\n**Goal:** User needs to select the reason for offboarding the supplier.\n**Action:** Invoke offboarding_reason_handoff\n- If not already stored, the PV will ask user to select reason\n**When message received:** \"Completed step 3 and waiting for user interaction\" → Invoke complete_step\n→ Wait for user response before proceeding to STEP 4\n\n### STEP 4 - SUMMARY (MANDATORY)\n**Goal:** Collect the supplier details to generate the summary.\n**Action:** Invoke summary_confirmation_handoff\n**When message received:** \"Completed step 4 and waiting for user interaction\" → Invoke complete_step\n**Mandatory** - \"After you receive completed step 4 and waiting for user interaction\" must invoke complete_step \n🚨 IMPORTANT: Upon detecting \"Completed step 4 and waiting for user interaction\" in any message, you MUST call complete_step\n→ Wait for user response before proceeding to STEP 5\n\n### STEP 5 - PROJECT REQUEST CREATION\n**Goal:** This step involves creating the project request.\n**Action:** Invoke request_creation_handoff\n- After rendering the project create PRF UI view, if the user selects \"send for validation\", display: \"Congrats! Your Project Request has been sent for validation. Sit back and relax, we'll notify you when there is an update.\"\n**When message received:** \"Completed step 5 and waiting for user interaction\" → Invoke complete_step\n→ Wait for final user action\n\n════════════════════════════════════════════════════════════════\n🔄 COMPLETE_STEP PATTERN (STRICT)\n════════════════════════════════════════════════════════════════\n\nEach handoff flow MUST follow this sequence:\n1. Invoke one handoff tool (e.g., supplier_validation_handoff)\n2. Wait for PV's \"Completed step X and waiting for user interaction\" message\n3. On this message, invoke complete_step ONLY\n4. Wait for user input\n5. After user input, evaluate the next appropriate handoff tool\n6. Repeat\n\n════════════════════════════════════════════════════════════════\nSUPERVISOR RULES\n════════════════════════════════════════════════════════════════\n\n**RULE 1: SMALL TALK**\nIf the message is ONLY greeting or acknowledgement (no offboarding intent):\n→ Respond directly. Do NOT route to any agent or handoff.\n\n**RULE 2: DIRECT ROUTING & HANDOFF (CRITICAL)**\nIf user message contains offboarding intent AND supplier name/number:\n→ IMMEDIATELY invoke supplier_validation_handoff. DO NOT respond with text asking for information already provided.\nIf the request clearly maps to a worker agent:\n→ Route to the best-suited agent by invoking the corresponding handoff tool. Pass input unchanged.\nIf no match:\n→ Ask for clarification.\n\n**RULE 3: FOLLOW-UP CONTEXT**\nIf user responds to a worker agent question:\n→ Route back to the SAME agent using the correct handoff tool.\n\n**RULE 4: ROUTE BACK TO USER**\nRespond directly when:\n- Request is unrelated to workflow\n- Worker requests more info\n- Worker completes task\n- {{flow.Checkingmultiplesuppliers}}\n == \"null\" (no suppliers found)\n\n**RULE 5: MULTI-INTENT HANDLING**\nIf message has multiple intents:\n→ Split into sub-tasks\n→ Route sequentially, invoking the appropriate handoff tool for each sub-task\n→ Maintain shared state\n→ Return combined response\n\n**RULE 6: HISTORY MANAGEMENT**\nAlways use conversation history and {{flow.pvresponse}}\n to:\n→ Preserve context\n→ Avoid repeated questions\n→ Make accurate routing and tool invocation decisions\n\n**RULE 7: AMBIGUITY HANDLING**\nIf intent is unclear:\n→ Do NOT route\n→ Ask clarification listing interpretations\n\n**RULE 8: STEP COMPLETION HANDLING (MANDATORY)**\nWhen you receive a message \"Completed step X and waiting for user interaction\" from any step handoff:\n→ You MUST invoke the complete_step handoff for rendering\n→ After complete_step, wait for user response\n→ Once user responds, proceed to the next appropriate step handoff\n→ Flow: step handoff → receives \"Completed step X...\" message → complete_step → user responds → next step handoff\n\n**RULE 9: SKIP STEP 2 HANDLING**\nWhen {{flow.skipStep2}}\n == true AND user confirms after step 2 message:\n→ Skip confirmation handoff\n→ Go directly to offboarding_reason_handoff (Step 3)\n\n════════════════════════════════════════════════════════════════\n⛔ ABSOLUTE RULES (STRICT)\n════════════════════════════════════════════════════════════════\n\n1. One handoff tool per turn—**no exceptions**\n2. ALWAYS follow up any \"Completed step X...\" message with complete_step\n3. ALWAYS wait for user input after each complete_step before proceeding\n4. NEVER ask for information the user has already provided\n5. If user says \"offboard supplier Microsoft\" → invoke supplier_validation_handoff immediately with supplierName=\"Microsoft\"\n6. ALWAYS invoke a handoff tool when routing triggers are matched\n7. DO NOT just respond with text when a handoff should be invoked\n8. When {{flow.Checkingmultiplesuppliers}}\n == \"null\" → respond with \"No suppliers found\" message, do NOT invoke any handoff\n\n════════════════════════════════════════════════════════════════\n🏁 FLOW SUMMARY (ONE STEP AT A TIME)\n════════════════════════════════════════════════════════════════\nUser: \"offboard supplier Microsoft\"\n→ supplier_validation_handoff\n[If multiple suppliers found]\n\"Completed step 1...\" → complete_step → wait for user\nUser selects supplier → confirmation → \"Completed step 2...\" → complete_step → wait for user\nUser confirms → offboarding_reason_handoff → \"Completed step 3...\" → complete_step → wait for user\n...continue to step 4, 5...\n[If single supplier found - skipStep2=true]\n\"Completed step 2...\" → complete_step → wait for user\nUser confirms → offboarding_reason_handoff (SKIP step 2 handoff) → \"Completed step 3...\" → complete_step → wait for user\n...continue to step 4, 5...\n[If no suppliers found - null]\n→ Respond: \"No suppliers found matching your search criteria...\"\n→ Wait for new supplier name\n\n\n════════════════════════════════════════════════════════════════\nDECISION PRINCIPLE\n════════════════════════════════════════════════════════════════\n\nAlways prioritize:\n- Correct agent selection\n- Correct handoff tool invocation\n- Clear task ownership\n- Minimal user friction\n- Controlled handoffs\n\nIf unsure - ask for clarification instead of guessing."
+                  }
+              ],
+              "tools": [
+                  {
+                      "_id": "655d50a3-dc5f-4165-b17b-efb6a2b5c947",
+                      "name": "confirmation",
+                      "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\nAlways render the partial view \"label_and_buttons\" from UI views and always ensure to override data model \"label_datamodel\" with label value - \"\"\" Thanks! I have found the <supplier_name> in the system<br>\n          Here's a quick summary: <br>\n          <strong>Supplier legal Name:</strong> <supplier_name> <br> \n          <strong>Supplier Partner Number:</strong> <sourceIdentificationNo> <br> \n          <strong>Supplier Partner Status: </strong> <partnerStatus> <br> \n          <strong>Supplier Onboarding Status:</strong> <onboardingStatus> <br> \n  \n Would you like to go ahead with the offboarding request?\"\"\". ",
+                      "type": "tool",
+                      "config": {
+                          "enabled": true,
+                          "toolId": "tool-handoff",
+                          "type": "handoff",
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "label_datamodel": {
+                                      "type": "string",
+                                      "description": "Thanks! I have found the <supplier_name> in the system<br>\n          Here's a quick summary: <br>\n          <strong>Supplier legal Name:</strong> <supplier_name> <br> \n          <strong>Supplier Partner Number:</strong> <sourceIdentificationNo> <br> \n          <strong>Supplier Partner Status: </strong> <partnerStatus> <br> \n          <strong>Supplier Onboarding Status:</strong> <onboardingStatus> <br> \n  \n Would you like to go ahead with the offboarding request?"
+                                  }
+                              },
+                              "required": [
+                                  "label_datamodel"
+                              ],
+                              "additionalProperties": false
+                          },
+                          "settings": {
+                              "nodeId": "fbhdluq"
+                          },
+                          "returnDirect": false,
+                          "parameters": {}
+                      }
+                  },
+                  {
+                      "_id": "3bcae21d-8357-46d3-bd15-c7582732ce5c",
+                      "name": "request_creation_handoff",
+                      "description": "You must invoke the \"Project_Request_Tool\" attached using the following payload format:\n    ```json\n\t\t  {\n\t\t\t\"data\": {\n\t\t\t\t\"intake_type\": \"<intake_type>\",\n\t\t\t\t \"generalRequestType\": {\n\t\t\t\t \"name\": \"Supplier Offboarding\",\n\t\t\t\t \"code\": \"7\"\n\t\t\t},\n\t\t\t\t \"project_description\": \"<generate_description_based_on_conversation>\",\n\t\t\t\t\"suppliers\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"sourceIdentificationNumber\": \"<sourceIdentificationNo>\"\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"offboardedSupplierName\": \"<Supplier Name Being Offboarded>\",\n\t\t\t\t\"supplierOffboardReason\": {\n\t\t\t\t\t\"name\": \"<offboarding reason label or name>\",\n\t\t\t\t\t\"code\": \"<offboarding reason value or code>\"\n\t\t\t\t},\n\t\t\t\t\"is_supplier_offboarding_discussed_with_stakeholders\": \"<yes_no>\",\n                \"offboardedSupplierName\":\"<supplier_name>\",\n                \"attachmentObjList\": \"<attachments or uploaded files list>\"  \n\t\t\t},\n\t\t\t\"event\": \"<event_type>\",\n\t\t\t\"additionalData\": {}\n\t\t}\n     ```\n",
+                      "type": "tool",
+                      "config": {
+                          "enabled": true,
+                          "toolId": "tool-handoff",
+                          "type": "handoff",
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "data": {
+                                      "type": "object",
+                                      "properties": {
+                                          "intake_type": {
+                                              "type": "string",
+                                              "description": "Type of intake"
+                                          },
+                                          "generalRequestType": {
+                                              "type": "object",
+                                              "properties": {
+                                                  "name": {
+                                                      "type": "string",
+                                                      "description": "Name of the general request type"
+                                                  },
+                                                  "code": {
+                                                      "type": "string",
+                                                      "description": "Code of the general request type"
+                                                  }
+                                              },
+                                              "required": [
+                                                  "name",
+                                                  "code"
+                                              ],
+                                              "additionalProperties": false
+                                          },
+                                          "project_description": {
+                                              "type": "string",
+                                              "description": "Description of the project generated based on conversation"
+                                          },
+                                          "suppliers": {
+                                              "type": "array",
+                                              "items": {
+                                                  "type": "object",
+                                                  "properties": {
+                                                      "sourceIdentificationNumber": {
+                                                          "type": "string",
+                                                          "description": "Source identification number of the supplier"
+                                                      }
+                                                  },
+                                                  "required": [
+                                                      "sourceIdentificationNumber"
+                                                  ],
+                                                  "additionalProperties": false
+                                              }
+                                          },
+                                          "offboardedSupplierName": {
+                                              "type": "string",
+                                              "description": "Name of the supplier being offboarded"
+                                          },
+                                          "supplierOffboardReason": {
+                                              "type": "object",
+                                              "properties": {
+                                                  "name": {
+                                                      "type": "string",
+                                                      "description": "Name or label for the offboarding reason"
+                                                  },
+                                                  "code": {
+                                                      "type": "string",
+                                                      "description": "Code for the offboarding reason"
+                                                  }
+                                              },
+                                              "required": [
+                                                  "name",
+                                                  "code"
+                                              ],
+                                              "additionalProperties": false
+                                          },
+                                          "is_supplier_offboarding_discussed_with_stakeholders": {
+                                              "type": "string",
+                                              "description": "Whether offboarding has been discussed with stakeholders (yes/no)"
+                                          },
+                                          "attachmentObjList": {
+                                              "type": "string",
+                                              "description": "List of attachments or uploaded files"
+                                          }
+                                      },
+                                      "required": [
+                                          "intake_type",
+                                          "generalRequestType",
+                                          "project_description",
+                                          "suppliers",
+                                          "offboardedSupplierName",
+                                          "supplierOffboardReason",
+                                          "is_supplier_offboarding_discussed_with_stakeholders",
+                                          "attachmentObjList"
+                                      ],
+                                      "additionalProperties": false
+                                  },
+                                  "event": {
+                                      "type": "string",
+                                      "description": "Type of the event"
+                                  },
+                                  "additionalData": {
+                                      "type": "object",
+                                      "properties": {},
+                                      "required": [],
+                                      "additionalProperties": false
+                                  }
+                              },
+                              "required": [
+                                  "data",
+                                  "event",
+                                  "additionalData"
+                              ],
+                              "additionalProperties": false
+                          },
+                          "settings": {
+                              "nodeId": "0c267h0"
+                          },
+                          "returnDirect": false,
+                          "parameters": {}
+                      }
+                  },
+                  {
+                      "_id": "7b8b8a8c-a489-488c-8477-0a4159768025",
+                      "name": "summary_confirmation_handoff",
+                      "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\nInvoke the tool \"label_and_buttons\" UI view. \n    - Override the \"label_datamodel\" to display Supplier Legal Name,Supplier Partner Number,Supplier Onboarding Status, Reason for Offboarding in proper textual/html summary format  with closing statement asking to confirm final project request creation. Display the field names in bold in summary.\n\n<strong>Supplier Legal Name:</strong> <supplierLegalName> <br>\n<strong>Supplier Partner Number:</strong> <PartnerNumber> <br>\n<strong>Supplier Onboarding Status:</strong> <onboardingStatus> <br>\n<strong>Reason for Offboarding:</strong> <offboardingReason> <br>",
+                      "type": "tool",
+                      "config": {
+                          "enabled": true,
+                          "toolId": "tool-handoff",
+                          "type": "handoff",
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "label_datamodel": {
+                                      "type": "string",
+                                      "description": "<strong>Supplier Legal Name:</strong> {{thread.pv_supplier_messages.supplierLegalName}} <br>\n<strong>Supplier Partner Number:</strong> {{nodes.supervisor.toolResults.summary_confirmation_handoff.PartnerNumber}} <br>\n<strong>Supplier Onboarding Status:</strong> {{nodes.supervisor.toolResults.summary_confirmation_handoff.onboardingStatus}} <br>\n<strong>Reason for Offboarding:</strong> <offboardingReason> <br>"
+                                  }
+                              },
+                              "required": [
+                                  "label_datamodel"
+                              ],
+                              "additionalProperties": false
+                          },
+                          "settings": {
+                              "nodeId": "jocftqw"
+                          },
+                          "returnDirect": false,
+                          "parameters": {}
+                      }
+                  },
+                  {
+                      "_id": "239293e4-0172-403c-971d-4f6aa12519cf",
+                      "name": "offboarding_reason_handoff",
+                      "description": "Just call the tool , no need to pass any parameters",
+                      "type": "tool",
+                      "config": {
+                          "enabled": true,
+                          "toolId": "tool-handoff",
+                          "type": "handoff",
+                          "schema": {
+                              "type": "object",
+                              "properties": {},
+                              "required": [],
+                              "additionalProperties": false
+                          },
+                          "settings": {
+                              "nodeId": "qaf3ogm"
+                          },
+                          "returnDirect": false,
+                          "parameters": {}
+                      }
+                  },
+                  {
+                      "_id": "fdde9472-a052-4a29-8965-6c5032f5c3f7",
+                      "name": "supplier_validation_handoff",
+                      "description": "Description:\n- You must call the \"Get supplier\" tool attached using the following payload format:\n       {\n        \"supplierName\": \"<supplier_name>\",\n        \"supplierIdentificationNumber\": \"<supplier_identification_number>\"\n       }\n     ```\nIf more than one supplier found than render the \"get_suppliers\" tool response in the UI view \"SupplierGridV1\", always ensure to pass <supplier_name>, <sourceIdentificationNo>, <partnerStatus>, <onboardingStatus>, <location> from \"get-suppliers\" tool response and ensure to set \"supplierGrid_msg\" data override value with \"I found multiple suppliers in our records with similar names. Please select a supplier from the list below to confirm.\".\n\n\n",
+                      "type": "tool",
+                      "config": {
+                          "enabled": true,
+                          "toolId": "tool-handoff",
+                          "type": "handoff",
+                          "schema": {
+                              "type": "object",
+                              "properties": {
+                                  "data": {
+                                      "type": "object",
+                                      "properties": {
+                                          "supplierName": {
+                                              "type": "string",
+                                              "description": "Name of the supplier"
+                                          },
+                                          "supplierIdentificationNumber": {
+                                              "type": "string",
+                                              "description": "Identification number of the supplier"
+                                          }
+                                      },
+                                      "required": [
+                                          "supplierName",
+                                          "supplierIdentificationNumber"
+                                      ],
+                                      "additionalProperties": false
+                                  }
+                              },
+                              "required": [
+                                  "data"
+                              ],
+                              "additionalProperties": false
+                          },
+                          "settings": {
+                              "nodeId": "ggu87ho"
+                          },
+                          "returnDirect": false,
+                          "parameters": {}
+                      }
+                  }
+              ],
+              "resources": [],
+              "maxIterations": 5,
+              "includeThoughts": true,
+              "structuredOutput": {
+                  "enable": false,
+                  "name": "",
+                  "description": "",
+                  "schema": {
+                      "type": "object",
+                      "properties": {},
+                      "required": [],
+                      "additionalProperties": false
+                  }
+              }
+          },
+          "data": {},
+          "variableUpdates": [
+              {
+                  "fieldName": "thread.messages",
+                  "operation": "append",
+                  "value": "{{nodeOutput.text}}",
+                  "role": "assistant"
+              }
+          ],
+          "width": 350,
+          "height": 185,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 450.60718987849714,
+              "y": -193.09290091849084
+          },
+          "dragging": false
+      },
+      {
+          "id": "ggu87ho",
+          "type": "tool",
+          "name": "getsuppliers",
+          "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get-suppliers",
+          "position": {
+              "x": 666.3896059528514,
+              "y": 451.40055677499726
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-getsuppliers-18",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "event": {
+                          "description": "Event to execute DAC policy in server function.",
+                          "type": "string"
+                      },
+                      "data": {
+                          "type": "string",
+                          "description": "Payload used to execute the function."
+                      },
+                      "additionalData": {
+                          "type": "string",
+                          "description": "Any additional data used by the function."
+                      }
+                  },
+                  "required": [
+                      "data"
+                  ],
+                  "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get-suppliers"
+              },
+              "settings": {
+                  "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "functionId": "009b57df-073f-49f2-b186-8715de0a4ea2",
+                  "type": "ssf-call",
+                  "source": "current-module",
+                  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "serverName": "module mcp"
+              },
+              "parameters": {
+                  "event": "\"\"",
+                  "data": "{{nodes.supervisor.toolResults.supplier_validation_handoff.data}}",
+                  "additionalData": "{}"
+              }
+          },
+          "data": {},
+          "width": 306,
+          "height": 94,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 666.3896059528514,
+              "y": 451.40055677499726
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "{{nodeOutput.result}}",
+                  "role": "tool"
+              }
+          ]
+      },
+      {
+          "id": "wu9rrfn",
+          "type": "tool",
+          "name": "suppliergridv1",
+          "description": "Description:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.",
+          "position": {
+              "x": 1781.4437574134445,
+              "y": 310.95307279825073
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-SupplierGridV1-66",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "preText": {
+                          "description": "Text message to be rendered before the content of the partial view",
+                          "type": "string"
+                      },
+                      "postText": {
+                          "description": "Text message to be rendered after the content of the partial view",
+                          "type": "string"
+                      },
+                      "gridData": {
+                          "description": "Description:\n\n\nNotes:\n",
+                          "type": "string"
+                      },
+                      "supplierGrid_msg": {
+                          "description": "Description:\nUse this override to set data for label. Type of data is html string and overrideid is \"supplierGrid_msg\".\n\nNotes:\nUse this override to set data for label. Type of data is html string and overrideid is \"supplierGrid_msg\".",
+                          "type": "string"
+                      }
+                  },
+                  "condition": "Description:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records."
+              },
+              "settings": {
+                  "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"62e1e08f-92c0-4016-aa55-706cbbf77a44\",\"Version\":[0,0],\"Type\":\"partialView\",\"Name\":\"SupplierGridV1\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\",\"Instruction\":\"This tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"gridData\":{\"Type\":\"data\",\"OverrideId\":\"gridData\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"gridData\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"},\"supplierGrid_msg\":{\"Type\":\"data\",\"OverrideId\":\"supplierGrid_msg\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"supplierGrid_msg\",\"Description\":\"Use this override to set data for label. Type of data is html string and overrideid is \\u0022supplierGrid_msg\\u0022.\",\"Instruction\":\"Use this override to set data for label. Type of data is html string and overrideid is \\u0022supplierGrid_msg\\u0022.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"}}}",
+                  "type": "partial-view",
+                  "source": "current-module",
+                  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "serverName": "module mcp"
+              },
+              "parameters": {
+                  "preText": "",
+                  "postText": "",
+                  "gridData": "{{nodes.getsuppliers.result.data.suppliers}}",
+                  "supplierGrid_msg": "Multiple suppliers found. Please select a supplier from the grid below"
+              }
+          },
+          "data": {},
+          "width": 350,
+          "height": 110,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 1781.4437574134445,
+              "y": 310.95307279825073
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "flow.isPvRendered",
+                  "operation": "set",
+                  "value": true
+              },
+              {
+                  "fieldName": "thread.messages",
+                  "operation": "append",
+                  "value": " ",
+                  "role": "assistant"
+              },
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "Completed step 1 and waiting for user interaction",
+                  "role": "tool"
+              }
+          ]
+      },
+      {
+          "id": "fbhdluq",
+          "type": "tool",
+          "name": "labelandbuttons",
+          "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
+          "position": {
+              "x": 1781.4437574134445,
+              "y": 632.5369551686446
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-labelandbuttons-61",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "preText": {
+                          "description": "Text message to be rendered before the content of the partial view",
+                          "type": "string"
+                      },
+                      "postText": {
+                          "description": "Text message to be rendered after the content of the partial view",
+                          "type": "string"
+                      },
+                      "label_datamodel": {
+                          "description": "Description:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.",
+                          "type": "string"
+                      },
+                      "buttons_datamodel": {
+                          "description": "Description:\n\n\nNotes:\n",
+                          "type": "string"
+                      }
+                  },
+                  "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
+              },
+              "settings": {
+                  "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"e1a380cd-75d0-4534-ac80-aaa5301718ee\",\"Version\":[1,0],\"Type\":\"partialView\",\"Name\":\"label_and_buttons\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This partial view is responsible for rendering the label and buttons/options.\",\"Instruction\":\"This partial view is responsible for rendering the label and buttons/options.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                  "type": "partial-view",
+                  "source": "current-module",
+                  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "serverName": "module mcp"
+              },
+              "parameters": {
+                  "preText": "",
+                  "postText": "",
+                  "label_datamodel": "{{nodes.supervisor.toolResults.confirmation.label_datamodel}}",
+                  "buttons_datamodel": "[{\"label\": \"Proceed with Request\",\"value\": \"Proceed with Request\"}]"
+              }
+          },
+          "data": {},
+          "width": 350,
+          "height": 110,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 1779.9999110462209,
+              "y": 632.5369551686446
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "flow.isPvRendered",
+                  "operation": "set",
+                  "value": true
+              },
+              {
+                  "fieldName": "thread.messages",
+                  "operation": "append",
+                  "value": " ",
+                  "role": "assistant"
+              },
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "Completed step 2 and waiting for user interaction",
+                  "role": "tool"
+              }
+          ]
+      },
+      {
+          "id": "jocftqw",
+          "type": "tool",
+          "name": "labelandbuttons1",
+          "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
+          "position": {
+              "x": 70.16180125734692,
+              "y": 511.3280287997821
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-labelandbuttons-61",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "preText": {
+                          "description": "Text message to be rendered before the content of the partial view",
+                          "type": "string"
+                      },
+                      "postText": {
+                          "description": "Text message to be rendered after the content of the partial view",
+                          "type": "string"
+                      },
+                      "label_datamodel": {
+                          "description": "Description:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.",
+                          "type": "string"
+                      },
+                      "buttons_datamodel": {
+                          "description": "Description:\n\n\nNotes:\n",
+                          "type": "string"
+                      }
+                  },
+                  "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
+              },
+              "settings": {
+                  "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"e1a380cd-75d0-4534-ac80-aaa5301718ee\",\"Version\":[1,0],\"Type\":\"partialView\",\"Name\":\"label_and_buttons\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This partial view is responsible for rendering the label and buttons/options.\",\"Instruction\":\"This partial view is responsible for rendering the label and buttons/options.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                  "type": "partial-view",
+                  "source": "current-module",
+                  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "serverName": "module mcp"
+              },
+              "parameters": {
+                  "preText": "",
+                  "postText": "",
+                  "label_datamodel": "{{nodes.supervisor.toolResults.summary_confirmation_handoff.label_datamodel}}",
+                  "buttons_datamodel": "[{\"label\": \"Create Request\",\"value\": \"Create Request\"}]"
+              }
+          },
+          "data": {},
+          "width": 350,
+          "height": 110,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 70.16180125734692,
+              "y": 511.3280287997821
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "flow.isPvRendered",
+                  "operation": "set",
+                  "value": true
+              },
+              {
+                  "fieldName": "thread.messages",
+                  "operation": "append",
+                  "value": " ",
+                  "role": "assistant"
+              },
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "Completed step 4 and waiting for user interaction",
+                  "role": "tool"
+              }
+          ]
+      },
+      {
+          "id": "v83ozem",
+          "type": "tool",
+          "name": "labelandbuttons2",
+          "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
+          "position": {
+              "x": 64.32984406614813,
+              "y": 359.5851132894133
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-labelandbuttons-61",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "preText": {
+                          "description": "Text message to be rendered before the content of the partial view",
+                          "type": "string"
+                      },
+                      "postText": {
+                          "description": "Text message to be rendered after the content of the partial view",
+                          "type": "string"
+                      },
+                      "label_datamodel": {
+                          "description": "Description:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.",
+                          "type": "string"
+                      },
+                      "buttons_datamodel": {
+                          "description": "Description:\n\n\nNotes:\n",
+                          "type": "string"
+                      }
+                  },
+                  "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
+              },
+              "settings": {
+                  "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"e1a380cd-75d0-4534-ac80-aaa5301718ee\",\"Version\":[1,0],\"Type\":\"partialView\",\"Name\":\"label_and_buttons\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This partial view is responsible for rendering the label and buttons/options.\",\"Instruction\":\"This partial view is responsible for rendering the label and buttons/options.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                  "type": "partial-view",
+                  "source": "current-module",
+                  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "serverName": "module mcp"
+              },
+              "parameters": {
+                  "preText": "",
+                  "postText": "",
+                  "label_datamodel": "Certainly. To proceed, what's the primary reason for offboarding this supplier?",
+                  "buttons_datamodel": "{{nodes.getglobalcode.result.questionOptions}}"
+              }
+          },
+          "data": {},
+          "width": 350,
+          "height": 110,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 62.79414842964397,
+              "y": 359.5851132894133
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "flow.isPvRendered",
+                  "operation": "set",
+                  "value": true
+              },
+              {
+                  "fieldName": "thread.messages",
+                  "operation": "append",
+                  "value": " ",
+                  "role": "assistant"
+              },
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "Completed step 3 and waiting for user interaction",
+                  "role": "tool"
+              }
+          ]
+      },
+      {
+          "id": "qaf3ogm",
+          "type": "tool",
+          "name": "getglobalcode",
+          "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code",
+          "position": {
+              "x": -398.9376761389534,
+              "y": 367.5851132894133
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-GetGlobalCode-37",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "event": {
+                          "description": "Event to execute DAC policy in server function.",
+                          "type": "string"
+                      },
+                      "data": {
+                          "type": "string",
+                          "description": "Payload used to execute the function."
+                      },
+                      "additionalData": {
+                          "type": "string",
+                          "description": "Any additional data used by the function."
+                      }
+                  },
+                  "required": [
+                      "data"
+                  ],
+                  "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code"
+              },
+              "settings": {
+                  "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "functionId": "bade57a4-cf6a-4437-afc4-457310c40d7a",
+                  "type": "ssf-call",
+                  "source": "current-module",
+                  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "serverName": "module mcp"
+              },
+              "parameters": {
+                  "event": "\"\"",
+                  "data": "{\"CodeType\": \"PPST-SupplierOffboarding\"}",
+                  "additionalData": "{}"
+              }
+          },
+          "data": {},
+          "width": 324,
+          "height": 94,
+          "selected": false,
+          "positionAbsolute": {
+              "x": -398.9376761389534,
+              "y": 371.6971418286142
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "{{nodeOutput.result}}",
+                  "role": "tool"
+              }
+          ]
+      },
+      {
+          "id": "0c267h0",
+          "type": "tool",
+          "name": "projectrequesttool",
+          "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Project_Request_Tool",
+          "position": {
+              "x": -423.3292459441749,
+              "y": 661.1785759910978
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-ProjectRequestTool-28",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "event": {
+                          "description": "Event to execute DAC policy in server function.",
+                          "type": "string"
+                      },
+                      "data": {
+                          "type": "string",
+                          "description": "Payload used to execute the function."
+                      },
+                      "additionalData": {
+                          "type": "string",
+                          "description": "Any additional data used by the function."
+                      }
+                  },
+                  "required": [
+                      "data"
+                  ],
+                  "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Project_Request_Tool"
+              },
+              "settings": {
+                  "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "functionId": "05afc7e4-3c57-47d1-ba51-44633c06abbb",
+                  "type": "ssf-call",
+                  "source": "current-module",
+                  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "serverName": "module mcp"
+              },
+              "parameters": {
+                  "event": "{{nodes.supervisor.toolResults.request_creation_handoff.event}}",
+                  "data": "{{nodes.supervisor.toolResults.request_creation_handoff.data}}",
+                  "additionalData": "{{nodes.supervisor.toolResults.request_creation_handoff.additionalData}}"
+              }
+          },
+          "data": {},
+          "width": 348,
+          "height": 94,
+          "selected": false,
+          "positionAbsolute": {
+              "x": -423.3292459441749,
+              "y": 661.1785759910979
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "{{nodeOutput.result}}",
+                  "role": "tool"
+              }
+          ]
+      },
+      {
+          "id": "5tc0ly8",
+          "type": "tool",
+          "name": "prfcreaterequestformpv",
+          "description": "Description:\nCreate Project Request\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nsave value of generated overrides 'projectRequestOverrides' to ${sendForValidationPV}",
+          "position": {
+              "x": 64.32984406614813,
+              "y": 653.1785759910978
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "mcp-62e995f8-9aed-4aab-9621-45c817019856-prfcreateRequestFormpv",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "preText": {
+                          "description": "Text message to be rendered before the content of the partial view",
+                          "type": "string"
+                      },
+                      "postText": {
+                          "description": "Text message to be rendered after the content of the partial view",
+                          "type": "string"
+                      },
+                      "projectRequestOverrides": {
+                          "description": "Description:\nThe value of this override can be user specific like ```json {\"documentCode\":\"&lt;documentCode&gt;\"}```\n\nNotes:\nThe value of this override can be user specific like ```json {\"documentCode\":\"&lt;documentCode&gt;\"}```",
+                          "type": "string"
+                      }
+                  },
+                  "condition": "Description:\nCreate Project Request\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nsave value of generated overrides 'projectRequestOverrides' to ${sendForValidationPV}"
+              },
+              "settings": {
+                  "serverId": "62e995f8-9aed-4aab-9621-45c817019856"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"d2801162-5faa-4e94-a6ed-39b9b4e3453a\",\"Version\":[0,0],\"Type\":\"partialSection\",\"Name\":\"prf_createRequestForm_pv\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"Create Project Request\",\"Instruction\":\"save value of generated overrides \\u0027projectRequestOverrides\\u0027 to ${sendForValidationPV}\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"projectRequestOverrides\":{\"Type\":\"data\",\"OverrideId\":\"projectRequestOverrides\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"projectRequestDM\",\"Description\":\"The value of this override can be user specific like \\u0060\\u0060\\u0060json {\\u0022documentCode\\u0022:\\u0022\\u0026lt;documentCode\\u0026gt;\\u0022}\\u0060\\u0060\\u0060\",\"Instruction\":\"The value of this override can be user specific like \\u0060\\u0060\\u0060json {\\u0022documentCode\\u0022:\\u0022\\u0026lt;documentCode\\u0026gt;\\u0022}\\u0060\\u0060\\u0060\",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"}}}",
+                  "type": "partial-view"
+              },
+              "parameters": {
+                  "preText": "",
+                  "postText": "",
+                  "projectRequestOverrides": "{{nodes.projectrequesttool.result}}"
+              }
+          },
+          "data": {},
+          "width": 350,
+          "height": 110,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 62.79961902990294,
+              "y": 653.1785759910978
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "flow.isPvRendered",
+                  "operation": "set",
+                  "value": true
+              },
+              {
+                  "fieldName": "thread.messages",
+                  "operation": "append",
+                  "value": " ",
+                  "role": "assistant"
+              },
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "Completed step 5 and waiting for user interaction",
+                  "role": "tool"
+              }
+          ]
+      },
+      {
+          "id": "5vot9mq",
+          "type": "llm",
+          "name": "llm_0",
+          "description": "",
+          "position": {
+              "x": 1050.6539473420198,
+              "y": 447.40055677499726
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "model": {
+                  "code": "gpt-4.1",
+                  "name": "OpenAI GPT-4.1"
+              },
+              "promptTemplate": [
+                  {
+                      "id": "afb55497-f747-49d7-a61f-20abdbb67ae3",
+                      "role": "system",
+                      "text": "Analyze {{nodes.getsuppliers.result}} and determine the supplier count:\n\nOUTPUT \"true\" ONLY IF:\n- The result contains \"gridRows\" array with MORE THAN ONE supplier object\n\nOUTPUT \"false\" ONLY IF:\n- The result contains \"gridRows\" array with EXACTLY ONE supplier object\n\nOUTPUT \"null\" IF ANY OF THESE ARE TRUE:\n- The result contains \"No matching supplier\" text anywhere\n- The \"gridRows\" array is empty or missing\n- The result has no supplier data\n- The data object is empty or contains only error/status messages\n\nCRITICAL: If you see \"No matching supplier\", \"result\": \"No matching supplier\", or any error message, you MUST output \"null\". Do NOT output \"false\" for error messages."
+                  }
+              ],
+              "structuredOutput": {
+                  "enable": true,
+                  "name": "",
+                  "description": "",
+                  "schema": {
+                      "type": "object",
+                      "properties": {
+                          "result": {
+                              "type": "string",
+                              "description": "Must be exactly one of: \"true\" (multiple suppliers), \"false\" (single supplier),\"null\" (no suppliers/error)\""
+                          }
+                      },
+                      "required": [
+                          "result"
+                      ],
+                      "additionalProperties": false
+                  }
+              }
+          },
+          "data": {},
+          "variableUpdates": [
+              {
+                  "fieldName": "flow.Checkingmultiplesuppliers",
+                  "operation": "set",
+                  "value": "{{nodeOutput.structuredOutput.result}}"
+              }
+          ],
+          "width": 250,
+          "height": 102,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 1050.6539473420198,
+              "y": 447.4005567749972
+          },
+          "dragging": false
+      },
+      {
+          "id": "eeiinro",
+          "type": "rule",
+          "name": "rule_0",
+          "description": "",
+          "position": {
+              "x": 1415.0448725793783,
+              "y": 390.90055677499726
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "rules": [
+                  {
+                      "ruleId": "r-z9r4m8av",
+                      "enable": true,
+                      "conditions": [
+                          {
+                              "field": "{{flow.Checkingmultiplesuppliers}}",
+                              "operator": "contains",
+                              "value": true
+                          },
+                          {
+                              "field": "{{flow.Checkingmultiplesuppliers}}",
+                              "operator": "equals",
+                              "value": true
+                          }
+                      ],
+                      "logicType": "OR"
+                  },
+                  {
+                      "ruleId": "r-bcf0t4o5",
+                      "enable": true,
+                      "conditions": [
+                          {
+                              "field": "{{flow.Checkingmultiplesuppliers}}",
+                              "operator": "contains",
+                              "value": false
+                          },
+                          {
+                              "field": "{{flow.Checkingmultiplesuppliers}}",
+                              "operator": "equals",
+                              "value": false
+                          }
+                      ],
+                      "logicType": "OR"
+                  },
+                  {
+                      "ruleId": "r-else",
+                      "enable": true,
+                      "conditions": [],
+                      "logicType": "default"
+                  }
+              ]
+          },
+          "data": {},
+          "width": 270,
+          "height": 215,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 1415.0448725793783,
+              "y": 388.95657104459764
+          },
+          "dragging": false
+      },
+      {
+          "id": "nzh4u07",
+          "type": "tool",
+          "name": "labelandbuttons4",
+          "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
+          "position": {
+              "x": 1783.0007472252767,
+              "y": 471.6144059161282
+          },
+          "deletable": true,
+          "properties": {
+              "retryOnFailure": false,
+              "maxRetries": 6,
+              "retryInterval": 541,
+              "errorHandling": "none",
+              "errorObject": {
+                  "body": "",
+                  "status_code": 500,
+                  "headers": {}
+              }
+          },
+          "config": {
+              "enabled": true,
+              "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-labelandbuttons-61",
+              "type": "mcp",
+              "schema": {
+                  "type": "object",
+                  "properties": {
+                      "preText": {
+                          "description": "Text message to be rendered before the content of the partial view",
+                          "type": "string"
+                      },
+                      "postText": {
+                          "description": "Text message to be rendered after the content of the partial view",
+                          "type": "string"
+                      },
+                      "label_datamodel": {
+                          "description": "Description:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.",
+                          "type": "string"
+                      },
+                      "buttons_datamodel": {
+                          "description": "Description:\n\n\nNotes:\n",
+                          "type": "string"
+                      }
+                  },
+                  "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
+              },
+              "settings": {
+                  "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+              },
+              "returnDirect": false,
+              "_meta": {
+                  "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"e1a380cd-75d0-4534-ac80-aaa5301718ee\",\"Version\":[1,0],\"Type\":\"partialView\",\"Name\":\"label_and_buttons\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This partial view is responsible for rendering the label and buttons/options.\",\"Instruction\":\"This partial view is responsible for rendering the label and buttons/options.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                  "type": "partial-view",
+                  "source": "current-module",
+                  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                  "serverName": "module mcp"
+              },
+              "parameters": {
+                  "preText": "",
+                  "postText": "",
+                  "label_datamodel": "\"Thanks! I have found the supplier in the system.<br>Here's a quick summary:<br><strong>Supplier Legal Name:</strong> {{nodes.getsuppliers.result.data.suppliers.gridRows[0].legalCompanyName}}<br><strong>Supplier Partner Number:</strong> {{nodes.getsuppliers.result.data.suppliers.gridRows[0].sourceIdentificationNo}}<br><strong>Supplier Partner Status:</strong> {{nodes.getsuppliers.result.data.suppliers.gridRows[0].partnerStatus}}<br><strong>Supplier Onboarding Status:</strong> {{nodes.getsuppliers.result.data.suppliers.gridRows[0].onboardingStatus}}<br><br>Would you like to go ahead with the offboarding request?\"",
+                  "buttons_datamodel": "[{\"label\": \"Proceed with Request\",\"value\": \"Proceed with Request\"}]"
+              }
+          },
+          "data": {},
+          "width": 350,
+          "height": 110,
+          "selected": false,
+          "positionAbsolute": {
+              "x": 1783.0007472252767,
+              "y": 471.6144059161282
+          },
+          "dragging": false,
+          "variableUpdates": [
+              {
+                  "fieldName": "flow.isPvRendered",
+                  "operation": "set",
+                  "value": true
+              },
+              {
+                  "fieldName": "thread.messages",
+                  "operation": "append",
+                  "value": " ",
+                  "role": "assistant"
+              },
+              {
+                  "fieldName": "flow.skipStep2",
+                  "operation": "set",
+                  "value": true
+              },
+              {
+                  "fieldName": "thread.supervisor_messages",
+                  "operation": "append",
+                  "value": "Completed step 2 and waiting for user interaction",
+                  "role": "tool"
+              }
+          ]
+      }
+  ],
+  "edges": [
+      {
+          "id": "reactflow__edge-start-jhobp69",
+          "source": "start",
+          "target": "jhobp69",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "start",
+              "targetType": "agent"
+          }
+      },
+      {
+          "id": "reactflow__edge-jhobp69-output",
+          "source": "jhobp69",
+          "target": "output",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "agent",
+              "targetType": "output"
+          }
+      },
+      {
+          "id": "jhobp69-handoff-fdde9472-a052-4a29-8965-6c5032f5c3f7",
+          "source": "jhobp69",
+          "target": "ggu87ho",
+          "type": "handoff",
+          "sourceHandle": "handoff",
+          "targetHandle": null,
+          "deletable": false,
+          "data": {
+              "toolId": "fdde9472-a052-4a29-8965-6c5032f5c3f7",
+              "isHandoff": true,
+              "sourceType": "agent",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "reactflow__edge-qaf3ogm-v83ozem",
+          "source": "qaf3ogm",
+          "target": "v83ozem",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "reactflow__edge-0c267h0-5tc0ly8",
+          "source": "0c267h0",
+          "target": "5tc0ly8",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "jhobp69-handoff-655d50a3-dc5f-4165-b17b-efb6a2b5c947",
+          "source": "jhobp69",
+          "target": "fbhdluq",
+          "type": "handoff",
+          "sourceHandle": "handoff",
+          "targetHandle": null,
+          "deletable": false,
+          "data": {
+              "toolId": "655d50a3-dc5f-4165-b17b-efb6a2b5c947",
+              "isHandoff": true,
+              "sourceType": "agent",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "jhobp69-handoff-7b8b8a8c-a489-488c-8477-0a4159768025",
+          "source": "jhobp69",
+          "target": "jocftqw",
+          "type": "handoff",
+          "sourceHandle": "handoff",
+          "targetHandle": null,
+          "deletable": false,
+          "data": {
+              "toolId": "7b8b8a8c-a489-488c-8477-0a4159768025",
+              "isHandoff": true,
+              "sourceType": "agent",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "jhobp69-handoff-239293e4-0172-403c-971d-4f6aa12519cf",
+          "source": "jhobp69",
+          "target": "qaf3ogm",
+          "type": "handoff",
+          "sourceHandle": "handoff",
+          "targetHandle": null,
+          "deletable": false,
+          "data": {
+              "toolId": "239293e4-0172-403c-971d-4f6aa12519cf",
+              "isHandoff": true,
+              "sourceType": "agent",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "jhobp69-handoff-3bcae21d-8357-46d3-bd15-c7582732ce5c",
+          "source": "jhobp69",
+          "target": "0c267h0",
+          "type": "handoff",
+          "sourceHandle": "handoff",
+          "targetHandle": null,
+          "deletable": false,
+          "data": {
+              "toolId": "3bcae21d-8357-46d3-bd15-c7582732ce5c",
+              "isHandoff": true,
+              "sourceType": "agent",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "reactflow__edge-ggu87ho-5vot9mq",
+          "source": "ggu87ho",
+          "target": "5vot9mq",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "llm"
+          }
+      },
+      {
+          "id": "reactflow__edge-5vot9mq-eeiinro",
+          "source": "5vot9mq",
+          "target": "eeiinro",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "llm",
+              "targetType": "rule"
+          }
+      },
+      {
+          "id": "reactflow__edge-eeiinror-z9r4m8av-wu9rrfn",
+          "source": "eeiinro",
+          "target": "wu9rrfn",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": "r-z9r4m8av",
+          "targetHandle": null,
+          "data": {
+              "sourceType": "rule",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "reactflow__edge-eeiinror-bcf0t4o5-nzh4u07",
+          "source": "eeiinro",
+          "target": "nzh4u07",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": "r-bcf0t4o5",
+          "targetHandle": null,
+          "data": {
+              "sourceType": "rule",
+              "targetType": "tool"
+          }
+      },
+      {
+          "id": "reactflow__edge-jocftqw-output",
+          "source": "jocftqw",
+          "target": "output",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "output"
+          }
+      },
+      {
+          "id": "reactflow__edge-v83ozem-output",
+          "source": "v83ozem",
+          "target": "output",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "output"
+          }
+      },
+      {
+          "id": "reactflow__edge-nzh4u07-output",
+          "source": "nzh4u07",
+          "target": "output",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "output"
+          }
+      },
+      {
+          "id": "reactflow__edge-wu9rrfn-output",
+          "source": "wu9rrfn",
+          "target": "output",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "output"
+          }
+      },
+      {
+          "id": "reactflow__edge-5tc0ly8-output",
+          "source": "5tc0ly8",
+          "target": "output",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "output"
+          }
+      },
+      {
+          "id": "reactflow__edge-eeiinror-else-jhobp69",
+          "source": "eeiinro",
+          "target": "jhobp69",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": "r-else",
+          "targetHandle": null,
+          "data": {
+              "sourceType": "rule",
+              "targetType": "agent"
+          }
+      },
+      {
+          "id": "reactflow__edge-fbhdluq-output",
+          "source": "fbhdluq",
+          "target": "output",
+          "style": {
+              "strokeWidth": 3
+          },
+          "sourceHandle": null,
+          "targetHandle": null,
+          "data": {
+              "sourceType": "tool",
+              "targetType": "output"
+          }
+      }
+  ],
+  "variables": {
+      "flow": [
+          {
+              "id": "var-0rw773k1h",
+              "name": "pvresponse",
+              "type": "string",
+              "default": "",
+              "required": false
+          },
+          {
+              "id": "var-qb1ota0mo",
+              "name": "Checkingmultiplesuppliers",
+              "type": "string",
+              "default": "",
+              "required": false
+          },
+          {
+              "id": "var-xhch7j12v",
+              "name": "skipStep2",
+              "type": "string",
+              "default": "",
+              "required": false
+          },
+          {
+              "id": "var-7qlmed7yx",
+              "name": "isPvRendered",
+              "type": "boolean",
+              "default": false,
+              "required": false
+          }
+      ],
+      "system": []
+  },
+  "interface": {
+      "inputs": {
+          "query": {
+              "type": "string",
+              "description": "User query to process",
+              "required": true
+          }
+      },
+      "outputs": {
+          "response": {
+              "type": "string",
+              "description": "Final response to the user"
+          }
+      }
+  },
+  "security": {
+      "activities": [
+          {
+              "refId": "11300009",
+              "code": "11300009",
+              "name": "Projects - Create project request"
+          }
+      ]
+  },
+  "isDisabled": false,
+  "publishChannels": [
+      {
+          "refId": "api",
+          "code": "api",
+          "name": "API",
+          "description": "Expose the agent as a REST API for system and app integrations"
+      },
+      {
+          "refId": "qi-ui",
+          "code": "qi-ui",
+          "name": "Qi UI",
+          "description": "Make your agent available in GEP’s Qi interface"
+      }
+  ],
+  "skills": [],
+  "createdBy": "Kimi.Zhao@gep.com",
+  "createdOn": "2026-01-28T21:53:17.702Z",
+  "updatedBy": "Kimi.Zhao@gep.com",
+  "updatedOn": "2026-01-28T21:53:17.702Z",
+  "environment": "DEV",
+  "appId": "98bed795-a280-4672-86ad-d13fa7aa83a9",
+  "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+  "version": "113a566f-098a-4b4f-9c99-e852e10a343f"
+}
