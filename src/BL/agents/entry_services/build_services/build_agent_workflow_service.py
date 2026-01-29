@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 
 from langgraph.graph import StateGraph, END
-from langchain_core.messages import AIMessage, SystemMessage, HumanMessage, ToolMessage, BaseMessage
+from langchain_core.messages import SystemMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 
 from BL.agents.build_tools.tools_factory_provider_service import ToolsFactoryProvider
@@ -35,6 +35,11 @@ class LangGraphAgentWorkflowBuilder:
         for e in start_edges:
             if e["target"] in self.agent_nodes:
                 return self._build_agent_graph(e["target"])
+        # No direct start->agent: start may go to rule first (e.g. start->rule->agent)
+        first_hop_targets = {e["target"] for e in start_edges}
+        for edge in self.edges:
+            if edge["source"] in first_hop_targets and edge["target"] in self.agent_nodes:
+                return self._build_agent_graph(edge["target"])
         raise ValueError("No root agent found")
 
     # ---------- internals ----------

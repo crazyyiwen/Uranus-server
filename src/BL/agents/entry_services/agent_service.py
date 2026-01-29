@@ -18,7 +18,7 @@ except Exception as e:
     raise e
 
 try:
-    factory = AgentFactoryProvider.get_factory(AgentFactoryTypes.CENTRALIZED_AGENT)
+    factory = AgentFactoryProvider.get_factory(AgentFactoryTypes.DECENTRALIZED_AGENT)
     builder = factory.create_agent_builder()
     agent_graph_complex = builder.build_dynamic_agents(str(AGENTIC_WORKFLOW_JSON_PATH_COMPLEX))
 except Exception as e:
