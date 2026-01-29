@@ -1,0 +1,6 @@
+1 build centralized agent
+2 build decentralized agent
+3 when to initialize the agent
+4 adding memory
+5 saving chat history in db
+6 testing api, function, tool calls

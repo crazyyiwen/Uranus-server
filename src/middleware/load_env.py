@@ -9,5 +9,3 @@ def load_env():
     """
     # Project root (when this file is src/middleware/load_env.py)
     load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
-    # src/ (e.g. when running from src/)
-    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
