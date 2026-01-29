@@ -1,0 +1,106 @@
+You are a senior backend engineer and AI systems architect.
+
+Your task is to DESIGN AND IMPLEMENT a reusable, extensible backend system
+using **Python + LangChain + LangGraph** to dynamically build and execute AI agent
+workflows from JSON definitions.
+
+** Before generating the code, please review the two json files:
+D:\Agents\Uranus\Uranus-server\src\core\jsons\agentic_workflow_complex.json
+D:\Agents\Uranus\Uranus-server\src\core\jsons\agentic_workflow_simple.json
+
+** The final solution can build agents based on above files.
+** All the code should be located in D:\Agents\Uranus\Uranus-server\src\BL\v3
+
+### Core Requirements
+1. **Language & Frameworks & Design pattern**
+   - Python only
+   - Use LangChain for LLM / tool abstractions
+   - Use LangGraph for graph-based orchestration
+   - No frontend code, no UI logic
+   - Be smart using design pattern to develop reusable code
+
+2. **Input Definitions**
+   - The system must load and interpret two JSON workflow definitions:
+     - agentic_workflow_complex.json :contentReference[oaicite:0]{index=0}
+     - agentic_workflow_simple.json :contentReference[oaicite:1]{index=1}
+   - These JSON files describe nodes, edges, configs, variable updates, and execution rules
+   - The graph must be built **dynamically at runtime** from JSON (not hardcoded)
+
+3. **Supported Node / Block Types**
+   Implement a pluggable node system supporting at least:
+   - "LLM"
+   - "Agent"
+   - "Http request"
+   - "Rule"
+   - "Workflow"
+   - "Guardrail"
+   - "Variable update"
+   - "Output"
+
+4. **Workflow Node (Critical)**
+   - A node of type `"workflow"` represents an **already-built agent graph**
+   - It must be supported as:
+     - a subgraph
+     - a handoff
+     - or a callable tool
+   - Workflow nodes MUST support **recursive composition**
+     (a workflow may contain other workflows)
+    - Each node can be as tool binded with agent or as handoff as a individual node in graph.
+
+5. **Recursive Graph Construction**
+   - The builder must support nested and recursive graphs
+   - Avoid infinite loops using:
+     - graph instance IDs
+     - depth limits
+     - or cycle detection
+   - Graphs must be composable and reusable
+
+6. **Architecture & Design Patterns (MANDATORY)**
+   Use proper design patterns to ensure reuse and clarity:
+   - Factory pattern for node creation
+   - Strategy pattern for execution behavior
+   - Registry pattern for node-type lookup
+   - Builder pattern for graph construction
+   - Clear separation of:
+     - parsing
+     - validation
+     - graph building
+     - execution
+
+7. **Execution Model**
+   - Use LangGraph StateGraph
+   - Support conditional edges (rules)
+   - Support supervisor / router agents
+   - Support tool invocation and handoff
+   - Maintain shared execution state (variables, memory, outputs)
+
+8. **Extensibility**
+   - New node types should be addable without modifying core logic
+   - Avoid large if/else blocks
+   - Prefer polymorphism and registries
+
+9. **Code Quality Expectations**
+   - Clean module structure
+   - Strong typing where helpful
+   - Clear docstrings
+   - No “POC-style” hacks
+   - Production-grade backend design
+
+10. **Out of Scope**
+    - No frontend
+    - No UI rendering
+    - No CSS / HTML
+    - No diagram generation
+
+### Deliverables
+- Suggested backend folder structure
+- Core abstractions (base node, graph builder, executor)
+- Example code showing:
+  - loading JSON
+  - building a LangGraph graph
+  - handling recursive workflow nodes
+- Explanation of how new node types can be added safely
+
+Think carefully before coding.
+Design first, then implement.
+Favor correctness, extensibility, and clarity over brevity.
