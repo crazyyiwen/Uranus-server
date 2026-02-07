@@ -10,6 +10,7 @@ from BL.v3.workflow_builder import (
     build_initial_state_from_user_input,
     get_v3_graph_for_file,
 )
+from core.utils.common_functions import get_file_path
 
 router = APIRouter()
 
@@ -35,31 +36,11 @@ async def v3_agent_invoke(request: Request):
                 {"error": "Missing or empty 'query' or 'message' in request body"},
                 400,
             )
-
-        graph = get_v3_graph_for_file(str(AGENTIC_WORKFLOW_JSON_PATH_SIMPLE))
-        initial_state = build_initial_state_from_user_input(query)
-
-        result = await ainvoke_workflow(graph, initial_state)
-        return ReturnModel(result, 200)
-    except Exception as ex:
-        return catch_exception(ex)
-
-
-@router.post("/example_basic_workflow")
-async def demo_agent(request: Request):
-    """
-    Same as /v3/invoke: runs V3 workflow with user input from body.
-
-    Request body:
-    {
-        "query": "User message or question"
-    }
-    """
-    try:
-        body = await request.json()
-        query = body.get("query") or body.get("message") or "I want to amend a contract"
-
-        graph = get_v3_graph_for_file(str(AGENTIC_WORKFLOW_JSON_PATH_SIMPLE))
+        
+        # should change file name dynamically
+        file_path = get_file_path("all.json")
+        # end
+        graph = await get_v3_graph_for_file(file_path)
         initial_state = build_initial_state_from_user_input(query)
 
         result = await ainvoke_workflow(graph, initial_state)
