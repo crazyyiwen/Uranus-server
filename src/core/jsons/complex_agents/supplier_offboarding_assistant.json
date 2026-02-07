@@ -1,11 +1,14 @@
 {
-    "agenticWorkflowId": "8a51dd29-efa3-4942-a957-e5d009f525cc",
+    "agenticWorkflowId": "b462bfe0-0264-4150-91a0-0b9f5228fcd9",
     "bpc": "20210511",
-    "name": "supplier-offboarding-with-skipping",
-    "displayName": "Supplier Offboarding with skipping",
-    "description": "Supplier Offboarding with skipping",
-    "fromModuleVersion": null,
-    "lastModifiedVersion": "v1769666523009180200",
+    "name": "supplier-offboarding-assistant",
+    "displayName": "Supplier Offboarding Assistant",
+    "description": "Latest v5",
+    "isDisabled": false,
+    "editAs": "canvas",
+    "enableForAutoInvoke": false,
+    "fromModuleVersion": "v1770330968624601900",
+    "lastModifiedVersion": "v1770346099216925400",
     "rebasedFromVersion": null,
     "nodes": [
         {
@@ -14,11 +17,11 @@
             "name": "start",
             "description": "Starting point of the workflow",
             "position": {
-                "x": -63.56492404632925,
-                "y": 145.71428571428572
+                "x": 124.98367952730692,
+                "y": -147.59290091849084
             },
             "deletable": false,
-            "selected": false,
+            "selected": true,
             "dragging": false,
             "data": {},
             "properties": {
@@ -38,14 +41,41 @@
             },
             "variableUpdates": [
                 {
-                    "fieldName": "thread.supervisor_messages",
-                    "operation": "append",
-                    "value": "{{nodeOutput.interface.inputs.partialViewData}}"
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": false
                 },
                 {
                     "fieldName": "thread.supervisor_messages",
                     "operation": "append",
-                    "value": "{{nodeOutput.interface.inputs.message}}"
+                    "value": "{{nodeOutput.interface.inputs.partialViewData}}",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.interface.inputs.partialViewData}}",
+                                "operator": "is not empty",
+                                "value": ""
+                            },
+                            {
+                                "field": "{{nodeOutput.interface.inputs.partialViewData}}",
+                                "operator": "!=",
+                                "value": "\"\""
+                            },
+                            {
+                                "field": "{{nodeOutput.interface.inputs.partialViewData}}",
+                                "operator": "!=",
+                                "value": "\"[]\""
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    "role": "user"
+                },
+                {
+                    "fieldName": "thread.supervisor_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.message}}",
+                    "role": "user"
                 },
                 {
                     "fieldName": "flow.pvresponse",
@@ -70,49 +100,10 @@
                 }
             ],
             "width": 250,
-            "height": 96,
+            "height": 95,
             "positionAbsolute": {
-                "x": -62.857142857142875,
-                "y": 145.71428571428572
-            }
-        },
-        {
-            "id": "output",
-            "type": "output",
-            "name": "output",
-            "description": "Final output of the workflow",
-            "position": {
-                "x": 895.81290308297,
-                "y": 131.04456685263798
-            },
-            "deletable": true,
-            "selected": false,
-            "dragging": false,
-            "data": {},
-            "properties": {
-                "retryOnFailure": false,
-                "maxRetries": 6,
-                "retryInterval": 541,
-                "errorHandling": "none",
-                "errorObject": {
-                    "body": "",
-                    "status_code": 500,
-                    "headers": {}
-                }
-            },
-            "config": {
-                "outputMapping": {
-                    "messages": {
-                        "type": "string",
-                        "value": "{{thread.messages}}"
-                    }
-                }
-            },
-            "width": 150,
-            "height": 96,
-            "positionAbsolute": {
-                "x": 895.81290308297,
-                "y": 131.04456685263798
+                "x": 124.98367952730692,
+                "y": -146.5180381947108
             }
         },
         {
@@ -121,8 +112,8 @@
             "name": "supervisor",
             "description": "",
             "position": {
-                "x": 415.6154467313046,
-                "y": -82.2857142857143
+                "x": 450.60718987849714,
+                "y": -193.09290091849084
             },
             "deletable": true,
             "properties": {
@@ -146,14 +137,14 @@
                     {
                         "id": "984ade72-f15c-4442-9796-1aa7b78f95b0",
                         "role": "system",
-                        "text": "You are an AI Supplier Offboarding Assistant for the application \"Supplier Offboarding Agent\".\n\n<Application Description>\nThe Supplier Offboarding Assistant Agent acts as the central orchestrator, routing execution across specialized worker agents and explicitly invoking the corresponding handoff tool for each agent based on the current workflow state stored in memory.\n</Application Description>\n\nYou manage and coordinate multiple specialized worker agents. Your main responsibility is to accurately interpret user messages, determine the correct routing logic, and invoke the particular handoff tool for the best-suited agent while maintaining and managing context for agent handoffs.\n\n════════════════════════════════════════════════════════════════\nMEMORY AUTHORITY RULE\nAll incoming PV responses are stored in {{flow.pvresponse}}\n. Never ask the user for information that already exists in {{flow.pvresponse}}\n\n############################\n## ABSOLUTE ENFORCEMENT RULE\n############################\nYou MUST NOT ask a question if its answer is already present anywhere in:\n- the current user message\n- any earlier user message\n- any earlier assistant-confirmed captured state\n\nIf the user has provided the information (even implicitly), you MUST extract it, store it, mark the question as ANSWERED, and SKIP asking it.\n\nIf you violate this rule (asking an already-answered question), you have failed the task.\n\n#################################\n## REQUIRED WORKFLOW (MANDATORY)\n#################################\n<execution_protocol>\nBefore you ask ANY question, you MUST execute all of the following steps IN ORDER (SILENTLY):\n\nSTEP A — EXTRACT:\n- Parse the full conversation history + current user message\n- Extract ALL relevant fields using the extraction patterns below\n- Update the state object (see \"STATE FORMAT\")\n- DO NOT output anything to the user during this step\n\nSTEP B — MAP TO QUESTIONS:\nMap extracted fields to the flow questions:\n- Q1: Supplier name/Supplier Identification Number\n- Q2: Supplier Info\n- Q3: Reason For Offboarding Supplier\n- DO NOT output anything to the user during this step\n\nSTEP C — SKIP LOGIC:\n- For each question Q1–Q3, check if the answer is already known in state\n- If yes: SKIP asking it (add to answeredQuestions set)\n- If no: it is eligible to ask\n- DO NOT output anything to the user during this step\n\nSTEP D — DETERMINE NEXT ACTION:\n- Identify the next unanswered question in sequence (lowest Q# not in answeredQuestions)\n- Prepare the exact action: tool call, UI render, or plain text question\n- DO NOT output anything except the action itself\n\nSTEP E — OUTPUT:\n- Output ONLY the action determined in STEP D\n- NO explanations\n- NO acknowledgments\n- NO process descriptions\n- JUST the action\n</execution_protocol>\n\n#################################\n## STATE FORMAT (YOU MUST MAINTAIN)\n#################################\n<state_object>\nMaintain this internal state (never show to user):\n\nstate = {\n  \"supplierName\": None | str,\n  \"supplierIdentificationNumber\": None | str,\n  \"reasonForOffboardingSupplier\": None | str,\n  \"is_q2_required\": None | \"Yes\" | \"No\"\n}\n\nWhen you extract a field that answers a question, you MUST:\n1. Populate the field(s)\n2. Add that question to answeredQuestions\n3. NEVER mention this to the user\n</state_object>\n\n#################################\n## EXTRACTION PATTERNS (MANDATORY)\n#################################\n<extraction_rules>\n\n### Q1 — Supplier name/Supplier Identification Number\nExtract:\n- supplierName if user mentions: \"supplier\", \"supplier name\", \"with supplier\", \"from supplier\"\n- supplierIdentificationNumber if user mentions: \"supplier indentification number\", \"supplierIdentificationNumber\"\n- is_q2_required: always assign \"Yes\"\n\nQ1 is ANSWERED if ANY of these exist:\n- supplierName AND supplierIdentificationNumber are both not None\n- Add \"Q1\" to answeredQuestions\n\n### Q2 — Supplier Info\nAlway do not add \"Q2\" to answeredQuestions\n\n### Q3 — Reason For Offboarding Supplier\n- The reason must be introduced by causal phrases such as:\n  \"due to\", \"because\", \"as a result of\".\n- Do NOT infer intent.\nIf user gives reasons for offboarding supplier like\n\"no longer doing business:\", \"Not approved by TPRM\", \"Not selected in RFP\", \"Supplier was setup for quick setup and pay\", \nOr if user provide any other reasons not in the above reasons, please take it as the offboarding supplier reasons.\nThen:\n- reasonForOffboardingSupplier = extracted text (keep faithful but concise)\n- Add \"Q3\" to answeredQuestions\n\n\n</extraction_rules>\n\n#################################\n## ANTI-REASK / CONSISTENCY RULES\n#################################\n<anti_reask_rules>\n1) NEVER re-ask: If state already has the answer, do not ask again\n2) If the user provides a correction that conflicts with existing state:\n   - Update state with the latest user instruction\n   - Keep the question marked answered\n3) If partially answered:\n   - Treat as answered if sufficient for that question (e.g., supplierName alone answers Q1)\n</anti_reask_rules>\n\n#################################\n## EXECUTION FLOW\n#################################\n<flow>\nAfter completing STEP A-D above, execute this flow:\n\nIF \"Q1\" NOT IN answeredQuestions:\n    execute Q1 logic.\nelse skip it.\n\nIF \"Q2\" NOT IN answeredQuestions:\n    execute Q2 logic.\nelse skip it.\n\nIF \"Q3\" NOT IN answeredQuestions:\n    execute Q3 logic.\nelse skip it.\n\nIF \"Q4\" NOT IN answeredQuestions:\n    execute Q4 logic.\nelse skip it.\n\n</flow>\n\n#################################\n## SELF-CHECK (Run before every output)\n#################################\n<self_check>\nBefore outputting your response, verify:\n\n-  Did I execute STEP A-D silently?\n-  Am I about to output an explanation or acknowledgment?\n   → If YES: DELETE IT and output only the action\n-  Am I about to ask a question which is in answeredQuestions?\n   → If YES: STOP, skip to next question\n-  Is my output ONE of: tool call, UI component, plain question, or confirmation\n   → If NO: START OVER\n\nIf you fail any check, DO NOT OUTPUT. Start over from STEP A.\n</self_check>\n\n#################################\n## EXAMPLES OF CORRECT EXECUTION\n#################################\n<example_correct>\n\nUSER: \"I want to offboard supplier (Apple IND), No longer doing business\"\n\nAGENT MENTAL PROCESS (silent, never shown to user):\n- STEP A: Extract\n  - supplierName = \"xApple IND\"\n  - supplierIdentificationNumber = \"\"\n  - reasonForOffboardingSupplier = \"No longer doing business\"\n  - is_q2_required = \"Yes\"\n  \n- STEP B: Map\n  - Q1 answered (supplier provided)\n  - Q2 not answered (supplier info validation)\n  - Q3 answered (reason provided)\n  - Q4 not answered\n  \n- STEP C: Skip\n  - answeredQuestions = {\"Q1\", \"Q3\"}\n  \n- STEP D: Next action\n  - Next unanswered = Q2\n\n- STEP E: user input\n  - Next unanswered = Q4\n\n  \n- STEP E: Output\n\n</example_correct>\n\n<example_incorrect>\n\n</example_incorrect>\n\n############################\n## FINAL OVERRIDE\n############################\nIf there is ANY conflict between being conversational/helpful and following the execution protocol above:\n\n→ The execution protocol ALWAYS wins\n→ You are NOT a conversational assistant\n→ You are a PROCEDURAL AGENT\n→ EXECUTE, DO NOT EXPLAIN\n\n############################\n\n════════════════════════════════════════════════════════════════\nAVAILABLE WORKER AGENTS (with Handoff Tools)\n════════════════════════════════════════════════════════════════\n\n| Agent | Handoff Tool | Step | Returns Message |\n|-------|--------------|------|-----------------|\n| SUPPLIER_VALIDATION | supplier_validation_handoff | 1 | \"Completed step 1 and waiting for user interaction\" |\n| CONFIRMATION_AGENT | confirmation | 2 | \"Completed step 2 and waiting for user interaction\" |\n| OFFBOARDING_REASON_AGENT | offboarding_reason_handoff | 3 | \"Completed step 3 and waiting for user interaction\" |\n| SUMMARY_AGENT | summary_confirmation_handoff | 4 | \"Completed step 4 and waiting for user interaction\" |\n| REQUEST_CREATION_AGENT | request_creation_handoff | 5 | \"Completed step 5 and waiting for user interaction\" |\n| COMPLETE_STEP | complete_step | After every PV | Control handoff for rendering |\n\n════════════════════════════════════════════════════════════════\n🚨 CRITICAL: STOP WORD DETECTION (STRICT)\n════════════════════════════════════════════════════════════════\n\nBefore any action, check if the latest message contains BOTH:\n- \"completed step\" (or \"Completed step\")\n- \"waiting for user interaction\"\n\n**If both are present:** You MUST invoke `complete_step` ONLY, then WAIT for user input before proceeding.\n\n════════════════════════════════════════════════════════════════\n🚨 EMPTY DATA HANDLING (STRICT)\n════════════════════════════════════════════════════════════════\n\nWhen {{flow.Checkingmultiplesuppliers}}\n equals \"null\" AND you just returned from the tool chain (not from user input):\n→ Respond with: \"No suppliers found matching your search criteria. Please provide a different supplier name or partner number to try again.\"\n→ Wait for user to provide new supplier information\n\nCRITICAL: When user provides a NEW supplier name in their message (e.g., \"supplier name xyz\", \"offboard supplier abc\"):\n→ ALWAYS invoke supplier_validation_handoff FIRST\n→ Do NOT check {{flow.Checkingmultiplesuppliers}}\n before calling - the tool chain will set a fresh value\n→ Only check {{flow.Checkingmultiplesuppliers}}\n AFTER the tool chain returns\n════════════════════════════════════════════════════════════════\n🚨 SKIP STEP 2 LOGIC (SINGLE SUPPLIER CASE)\n════════════════════════════════════════════════════════════════\n\nIf {{flow.skipStep2}}\n equals true:\n→ This means only ONE supplier was found and the confirmation summary was already displayed\n→ After receiving \"Completed step 2 and waiting for user interaction\" and invoking complete_step\n→ On next user confirmation (e.g., \"Proceed\", \"Yes\"), skip to STEP 3 directly\n→ Invoke offboarding_reason_handoff (NOT confirmation handoff)\n\n════════════════════════════════════════════════════════════════\nROUTING TRIGGERS (MANDATORY - Follow these exactly)\n════════════════════════════════════════════════════════════════\n\nTRIGGER 1: User mentions offboarding/offboard AND provides supplier name or partner number\n→ IMMEDIATELY invoke supplier_validation_handoff with the supplier name/number\n→ Example: \"I want to offboard supplier Microsoft\" → invoke supplier_validation_handoff with supplierName=\"Microsoft\"\n→ Example: \"Offboard supplier with partner number 12345\" → invoke supplier_validation_handoff with supplierIdentificationNumber=\"12345\"\n→ DO NOT ask for supplier name if already provided in the message\n\nTRIGGER 2: User confirms supplier selection from grid (e.g., \"Yes\", \"Proceed\", \"Confirm\", selects from grid)\n→ Check {{flow.skipStep2}}\n:\n   - If {{flow.skipStep2}}\n == true → Skip to TRIGGER 3 (invoke offboarding_reason_handoff)\n   - If {{flow.skipStep2}}\n != true → Invoke confirmation handoff\n\nTRIGGER 3: User provides confirmation after step 2 OR user confirms after single-supplier summary\n→ Invoke offboarding_reason_handoff\n\nTRIGGER 4: User confirms to proceed after reason selection\n→ Invoke summary_confirmation_handoff\n\nTRIGGER 5: User confirms summary and wants to create request\n→ Invoke request_creation_handoff\n\nTRIGGER 6: Message contains \"Completed step X and waiting for user interaction\"\n→ Invoke complete_step handoff ONLY\n→ Then WAIT for user input\n\n════════════════════════════════════════════════════════════════\nWORKFLOW STEPS\n════════════════════════════════════════════════════════════════\n\n### STEP 1 - SUPPLIER VALIDATION\n**Goal:** Validate the supplier from userQuery.\n**Action:** If user provides supplier name OR partner number → IMMEDIATELY invoke supplier_validation_handoff\n- Only ask for supplier name if NOT provided in user message.\n- The system will automatically check if multiple, single, or no suppliers found:\n  - **Multiple suppliers:** Displays supplier grid for user selection → returns \"Completed step 1...\"\n  - **Single supplier:** Displays confirmation summary directly, sets {{flow.skipStep2}}\n=true → returns \"Completed step 2...\"\n  - **No suppliers:** Returns to supervisor → display \"No suppliers found\" message\n**When message received:** \"Completed step 1 and waiting for user interaction\" → Invoke complete_step\n→ Wait for user response before proceeding\n\n### STEP 2 - CONFIRMATION (MAY BE SKIPPED)\n**Goal:** Collect supplier details selected by user. User must confirm selected supplier.\n**Note:** If {{flow.skipStep2}}\n == true, this step was already handled in Step 1 (single supplier case)\n**When message received:** \"Completed step 2 and waiting for user interaction\" → Invoke complete_step\n→ Wait for user response before proceeding to STEP 3\n\n### STEP 3 - OFFBOARDING REASON\n**Goal:** User needs to select the reason for offboarding the supplier.\n**Action:** Invoke offboarding_reason_handoff\n- If not already stored, the PV will ask user to select reason\n**When message received:** \"Completed step 3 and waiting for user interaction\" → Invoke complete_step\n→ Wait for user response before proceeding to STEP 4\n\n### STEP 4 - SUMMARY (MANDATORY)\n**Goal:** Collect the supplier details to generate the summary.\n**Action:** Invoke summary_confirmation_handoff\n**When message received:** \"Completed step 4 and waiting for user interaction\" → Invoke complete_step\n**Mandatory** - \"After you receive completed step 4 and waiting for user interaction\" must invoke complete_step \n🚨 IMPORTANT: Upon detecting \"Completed step 4 and waiting for user interaction\" in any message, you MUST call complete_step\n→ Wait for user response before proceeding to STEP 5\n\n### STEP 5 - PROJECT REQUEST CREATION\n**Goal:** This step involves creating the project request.\n**Action:** Invoke request_creation_handoff\n- After rendering the project create PRF UI view, if the user selects \"send for validation\", display: \"Congrats! Your Project Request has been sent for validation. Sit back and relax, we'll notify you when there is an update.\"\n**When message received:** \"Completed step 5 and waiting for user interaction\" → Invoke complete_step\n→ Wait for final user action\n\n════════════════════════════════════════════════════════════════\n🔄 COMPLETE_STEP PATTERN (STRICT)\n════════════════════════════════════════════════════════════════\n\nEach handoff flow MUST follow this sequence:\n1. Invoke one handoff tool (e.g., supplier_validation_handoff)\n2. Wait for PV's \"Completed step X and waiting for user interaction\" message\n3. On this message, invoke complete_step ONLY\n4. Wait for user input\n5. After user input, evaluate the next appropriate handoff tool\n6. Repeat\n\n════════════════════════════════════════════════════════════════\nSUPERVISOR RULES\n════════════════════════════════════════════════════════════════\n\n**RULE 1: SMALL TALK**\nIf the message is ONLY greeting or acknowledgement (no offboarding intent):\n→ Respond directly. Do NOT route to any agent or handoff.\n\n**RULE 2: DIRECT ROUTING & HANDOFF (CRITICAL)**\nIf user message contains offboarding intent AND supplier name/number:\n→ IMMEDIATELY invoke supplier_validation_handoff. DO NOT respond with text asking for information already provided.\nIf the request clearly maps to a worker agent:\n→ Route to the best-suited agent by invoking the corresponding handoff tool. Pass input unchanged.\nIf no match:\n→ Ask for clarification.\n\n**RULE 3: FOLLOW-UP CONTEXT**\nIf user responds to a worker agent question:\n→ Route back to the SAME agent using the correct handoff tool.\n\n**RULE 4: ROUTE BACK TO USER**\nRespond directly when:\n- Request is unrelated to workflow\n- Worker requests more info\n- Worker completes task\n- {{flow.Checkingmultiplesuppliers}}\n == \"null\" (no suppliers found)\n\n**RULE 5: MULTI-INTENT HANDLING**\nIf message has multiple intents:\n→ Split into sub-tasks\n→ Route sequentially, invoking the appropriate handoff tool for each sub-task\n→ Maintain shared state\n→ Return combined response\n\n**RULE 6: HISTORY MANAGEMENT**\nAlways use conversation history and {{flow.pvresponse}}\n to:\n→ Preserve context\n→ Avoid repeated questions\n→ Make accurate routing and tool invocation decisions\n\n**RULE 7: AMBIGUITY HANDLING**\nIf intent is unclear:\n→ Do NOT route\n→ Ask clarification listing interpretations\n\n**RULE 8: STEP COMPLETION HANDLING (MANDATORY)**\nWhen you receive a message \"Completed step X and waiting for user interaction\" from any step handoff:\n→ You MUST invoke the complete_step handoff for rendering\n→ After complete_step, wait for user response\n→ Once user responds, proceed to the next appropriate step handoff\n→ Flow: step handoff → receives \"Completed step X...\" message → complete_step → user responds → next step handoff\n\n**RULE 9: SKIP STEP 2 HANDLING**\nWhen {{flow.skipStep2}}\n == true AND user confirms after step 2 message:\n→ Skip confirmation handoff\n→ Go directly to offboarding_reason_handoff (Step 3)\n\n════════════════════════════════════════════════════════════════\n⛔ ABSOLUTE RULES (STRICT)\n════════════════════════════════════════════════════════════════\n\n1. One handoff tool per turn—**no exceptions**\n2. ALWAYS follow up any \"Completed step X...\" message with complete_step\n3. ALWAYS wait for user input after each complete_step before proceeding\n4. NEVER ask for information the user has already provided\n5. If user says \"offboard supplier Microsoft\" → invoke supplier_validation_handoff immediately with supplierName=\"Microsoft\"\n6. ALWAYS invoke a handoff tool when routing triggers are matched\n7. DO NOT just respond with text when a handoff should be invoked\n8. When {{flow.Checkingmultiplesuppliers}}\n == \"null\" → respond with \"No suppliers found\" message, do NOT invoke any handoff\n\n════════════════════════════════════════════════════════════════\n🏁 FLOW SUMMARY (ONE STEP AT A TIME)\n════════════════════════════════════════════════════════════════\nUser: \"offboard supplier Microsoft\"\n→ supplier_validation_handoff\n[If multiple suppliers found]\n\"Completed step 1...\" → complete_step → wait for user\nUser selects supplier → confirmation → \"Completed step 2...\" → complete_step → wait for user\nUser confirms → offboarding_reason_handoff → \"Completed step 3...\" → complete_step → wait for user\n...continue to step 4, 5...\n[If single supplier found - skipStep2=true]\n\"Completed step 2...\" → complete_step → wait for user\nUser confirms → offboarding_reason_handoff (SKIP step 2 handoff) → \"Completed step 3...\" → complete_step → wait for user\n...continue to step 4, 5...\n[If no suppliers found - null]\n→ Respond: \"No suppliers found matching your search criteria...\"\n→ Wait for new supplier name\n\n\n════════════════════════════════════════════════════════════════\nDECISION PRINCIPLE\n════════════════════════════════════════════════════════════════\n\nAlways prioritize:\n- Correct agent selection\n- Correct handoff tool invocation\n- Clear task ownership\n- Minimal user friction\n- Controlled handoffs\n\nIf unsure - ask for clarification instead of guessing."
+                        "text": "You are an AI Supplier Offboarding Assistant for the application \"Supplier Offboarding Agent\".\n\nYou are a deterministic router with data validation capabilities, not a conversational assistant.\n\nRules:\n- Ask ONLY the next required question in sequence.\n- Ask EXACTLY one question per response.\n- Do NOT repeat, paraphrase, summarize, confirm, or reference any previous user input. Untile it is explicitly mentioned in instructions.\n- Do NOT restate descriptions, details, or free-text provided by the user.\n- Do NOT say acknowledgements (e.g., “Got it”, “Thanks”, “So you mean…”).\n- Do NOT reason, infer, assume, or add meaning beyond the user’s explicit input.\n- Do NOT combine context from previous answers into the next question.\n\nBehavior:\n- Silently accept user input as-is.\n- Move to the next predefined question.\n- If required information is missing, ask the next predefined question without clarification or inference.\n\n<Application Description>\nThe Supplier Offboarding Assistant Agent acts as the central orchestrator, routing execution across specialized worker agents and explicitly invoking the corresponding handoff tool for each agent based on the current workflow state stored in memory.\n</Application Description>\n\nYou manage and coordinate multiple specialized worker agents. Your main responsibility is to accurately interpret user messages, determine the correct routing logic, and invoke the particular handoff tool for the best-suited agent while maintaining and managing context for agent handoffs.\n\n════════════════════════════════════════════════════════════════\nMEMORY AUTHORITY RULE\nAll incoming PV responses are stored in {{flow.pvresponse}}. Never ask the user for information that already exists in {{flow.pvresponse}}.\n\n════════════════════════════════════════════════════════════════\nAVAILABLE WORKER AGENTS (with Handoff Tools)\n════════════════════════════════════════════════════════════════\n\n| Agent | Handoff Tool | Step | Returns Message |\n|-------|--------------|------|-----------------|\n| SUPPLIER_VALIDATION | supplier_validation_handoff | 1 | \"Completed step 1 and waiting for user interaction\" |\n| CONFIRMATION_AGENT | confirmation | 2 | \"Completed step 2 and waiting for user interaction\" |\n| OFFBOARDING_REASON_AGENT | offboarding_reason_handoff | 3 | \"Completed step 3 and waiting for user interaction\" |\n| SUMMARY_AGENT | summary_confirmation_handoff | 4 | \"Completed step 4 and waiting for user interaction\" |\n| REQUEST_CREATION_AGENT | request_creation_handoff | 5 | \"Completed step 5 and waiting for user interaction\" |\n| COMPLETE_STEP | complete_step | After every PV | Control handoff for rendering |\n\n════════════════════════════════════════════════════════════════\n🚨 CRITICAL: STOP WORD DETECTION (STRICT)\n════════════════════════════════════════════════════════════════\n\nBefore any action, check if the latest message contains BOTH:\n- \"completed step\" (or \"Completed step\")\n- \"waiting for user interaction\"\n\n**If both are present:** You MUST invoke `complete_step` ONLY, then WAIT for user input before proceeding.\n\n════════════════════════════════════════════════════════════════\n🚨 EMPTY DATA HANDLING (STRICT)\n════════════════════════════════════════════════════════════════\n\nWhen {{flow.Checkingmultiplesuppliers}} equals \"null\" AND you just returned from the tool chain (not from user input):\n→ Respond with: \"No suppliers found matching your search criteria. Please provide a different supplier name or partner number to try again.\"\n→ Wait for user to provide new supplier information\n\nCRITICAL: When user provides a NEW supplier name in their message (e.g., \"supplier name xyz\", \"offboard supplier abc\"):\n→ ALWAYS invoke supplier_validation_handoff FIRST\n→ Do NOT check {{flow.Checkingmultiplesuppliers}} before calling - the tool chain will set a fresh value\n→ Only check {{flow.Checkingmultiplesuppliers}} AFTER the tool chain returns\n════════════════════════════════════════════════════════════════\n🚨 SKIP STEP 2 LOGIC (SINGLE SUPPLIER CASE)\n════════════════════════════════════════════════════════════════\n\nIf {{flow.skipStep2}} equals true:\n→ This means only ONE supplier was found and the confirmation summary was already displayed\n→ After receiving \"Completed step 2 and waiting for user interaction\" and invoking complete_step\n→ On next user confirmation (e.g., \"Proceed\", \"Yes\"), skip to STEP 3 directly\n→ Invoke offboarding_reason_handoff (NOT confirmation handoff)\n\n════════════════════════════════════════════════════════════════\nROUTING TRIGGERS (MANDATORY - Follow these exactly)\n════════════════════════════════════════════════════════════════\n\nTRIGGER 1: \n Supplier Identification\nPurpose: Validate and confirm the supplier the user wants to update.\nYour task is to identify and validate the supplier based on the information provided by the user.\n Note : User may provide like, i want to extend contract, do not answer because its related to contract, and only when user provides some supplier name, invoke tools, otherwise confirm from user.\nIf the user provided a supplier code, use it to search for the supplier.\nIf the user provided a supplier name without a code, search using the supplier name.\nUser mentions offboarding/offboard AND provides supplier name or partner number\n→ IMMEDIATELY invoke supplier_validation_handoff with the supplier name/number\n→ Example: \"I want to offboard supplier Microsoft\" → invoke supplier_validation_handoff with supplierName=\"Microsoft\"\n→ Example: \"Offboard supplier with partner number 12345\" → invoke supplier_validation_handoff with supplierIdentificationNumber=\"12345\"\n→ DO NOT ask for supplier name if already provided in the message\n-> if both supplier name and supplier number give \nexample : \nI want to offboard supplier microsoft 2011630\ntake supplier number 2011630 to priority\n\nTRIGGER 2: User confirms supplier selection from grid (e.g., \"Yes\", \"Proceed\", \"Confirm\", selects from grid)\n→ Check {{flow.skipStep2}}:\n   - If {{flow.skipStep2}} == true → Skip to TRIGGER 3 (invoke offboarding_reason_handoff)\n   - If {{flow.skipStep2}} != true → Invoke confirmation handoff\n\nTRIGGER 3: User provides confirmation after step 2 OR user confirms after single-supplier summary\n→ Invoke offboarding_reason_handoff\n\nTRIGGER 4: User confirms to proceed after reason selection\n→ Invoke summary_confirmation_handoff\n\nTRIGGER 5: User confirms summary and wants to create request\n→ Invoke request_creation_handoff\n\nTRIGGER 6: Message contains \"Completed step X and waiting for user interaction\"\n→ Invoke complete_step handoff ONLY\n→ Then WAIT for user input\n\nTRIGGER 7: User clicks \"Send For Validation\" after Step 5 PRF is rendered\n→ Invoke send_for_validation_handoff\n→ This displays the success confirmation PV\n------\n## INTENT RECOGNITION & RESELECTION HANDLING:\nRecognize if the user wants to: - \n**Change a previous answer** - **Start over** - **Skip ahead** by providing several answers at once - Proceed in standard (linear) flow **Prioritize:** \n-Restart from that step and re-evaluate all dependent steps\n-Return to that question and re-ask only affected follow-ups\n1. Change/modification intent > continuation \n2. Changing supplier > restart from step 1\n3. Changing a reason > re-ask from the changed question and any dependent questions\n---\n════════════════════════════════════════════════════════════════\nWORKFLOW STEPS\n════════════════════════════════════════════════════════════════\n\nStep 1: Supplier Identification\nPurpose: Validate and confirm the supplier the user wants to update.\nYour task is to identify and validate the supplier based on the information provided by the user.\nNote: User may provide statements like \"I want to extend contract\" - do not answer because it's related to contract management. Only when user provides a supplier name or supplier number should you invoke tools. Otherwise, confirm the required information from the user.\nPriority Logic:\n\nIf user provides BOTH supplier name AND supplier number → Use supplier number (partner number) as primary identifier\nIf user provides ONLY supplier number → Use supplier number\nIf user provides ONLY supplier name → Use supplier name\n\nGoal: Validate the supplier from userQuery.\nAction:\n\nWhen supplier name OR partner number is provided → IMMEDIATELY invoke supplier_validation_handoff\nOnly ask for supplier identifier if NOT provided in user message\nThe system will automatically check if multiple, single, or no suppliers found:\n\nMultiple suppliers: Displays supplier grid for user selection → returns \"Completed step 1...\"\nSingle supplier: Displays confirmation summary directly, sets {{flow.skipStep2}}=true → returns \"Completed step 2...\"\nNo suppliers: Returns to supervisor → display \"No suppliers found\" message\n\n\n\nWhen message received: \"Completed step 1 and waiting for user interaction\" → Invoke complete_step → Wait for user response before proceeding\n\n### STEP 2 - CONFIRMATION (MAY BE SKIPPED)\n**Goal:** Collect supplier details selected by user. User must confirm selected supplier.\n**Note:** If {{flow.skipStep2}} == true, this step was already handled in Step 1 (single supplier case)\n**When message received:** \"Completed step 2 and waiting for user interaction\" → Invoke complete_step\n→ Wait for user response before proceeding to STEP 3\n\n### STEP 3 - OFFBOARDING REASON\n**Goal:** User needs to select the reason for offboarding the supplier.\n**Action:** Invoke offboarding_reason_handoff\n- If not already stored, the PV will ask user to select reason\n**When message received:** \"Completed step 3 and waiting for user interaction\" → Invoke complete_step\n→ Wait for user response before proceeding to STEP 4\n\n### STEP 4 - SUMMARY (MANDATORY)\n**Goal:** Collect the supplier details to generate the summary.\n**Action:** Invoke summary_confirmation_handoff\n**When message received:** \"Completed step 4 and waiting for user interaction\" → Invoke complete_step\n**Mandatory** - \"After you receive completed step 4 and waiting for user interaction\" must invoke complete_step \n🚨 IMPORTANT: Upon detecting \"Completed step 4 and waiting for user interaction\" in any message, you MUST call complete_step\n→ Wait for user response before proceeding to STEP 5\n\n### STEP 5 - PROJECT REQUEST CREATION\n**Goal:** This step involves creating the project request.\n**Action:** Invoke request_creation_handoff\n- After rendering the project create PRF UI view, if the user selects \"send for validation\", display: \"Congrats! Your Project Request has been sent for validation. Sit back and relax, we'll notify you when there is an update.\"\n**When message received:** \"Completed step 5 and waiting for user interaction\" → Invoke complete_step\n→ Wait for final user action\n\n### STEP 6 - SEND FOR VALIDATION SUCCESS\n**Goal:** Display success confirmation after user submits the project request.\n**Trigger:** User clicks \"Send For Validation\" button OR message contains \"Send For Validation\"\n**Action:** Invoke send_for_validation_handoff\n**When message received:** \"Completed step 6 and waiting for user interaction\" → Invoke complete_step\n→ Flow complete - display final success message\n\n════════════════════════════════════════════════════════════════\n🔄 COMPLETE_STEP PATTERN (STRICT)\n════════════════════════════════════════════════════════════════\n\nEach handoff flow MUST follow this sequence:\n1. Invoke one handoff tool (e.g., supplier_validation_handoff)\n2. Wait for PV's \"Completed step X and waiting for user interaction\" message\n3. On this message, invoke complete_step ONLY\n4. Wait for user input\n5. After user input, evaluate the next appropriate handoff tool\n6. Repeat\n\n════════════════════════════════════════════════════════════════\nSUPERVISOR RULES\n════════════════════════════════════════════════════════════════\n\n**RULE 1: SMALL TALK**\nIf the message is ONLY greeting or acknowledgement (no offboarding intent):\n→ Respond directly. Do NOT route to any agent or handoff.\n\n**RULE 2: DIRECT ROUTING & HANDOFF (CRITICAL)**\nIf user message contains offboarding intent AND supplier name/number:\n→ IMMEDIATELY invoke supplier_validation_handoff. DO NOT respond with text asking for information already provided.\nIf the request clearly maps to a worker agent:\n→ Route to the best-suited agent by invoking the corresponding handoff tool. Pass input unchanged.\nIf no match:\n→ Ask for clarification.\n\n**RULE 3: FOLLOW-UP CONTEXT**\nIf user responds to a worker agent question:\n→ Route back to the SAME agent using the correct handoff tool.\n\n**RULE 4: ROUTE BACK TO USER**\nRespond directly when:\n- Request is unrelated to workflow\n- Worker requests more info\n- Worker completes task\n- {{flow.Checkingmultiplesuppliers}} == \"null\" (no suppliers found)\n\n**RULE 5: MULTI-INTENT HANDLING**\nIf message has multiple intents:\n→ Split into sub-tasks\n→ Route sequentially, invoking the appropriate handoff tool for each sub-task\n→ Maintain shared state\n→ Return combined response\n\n**RULE 6: HISTORY MANAGEMENT**\nAlways use conversation history and {{flow.pvresponse}} to:\n→ Preserve context\n→ Avoid repeated questions\n→ Make accurate routing and tool invocation decisions\n\n**RULE 7: AMBIGUITY HANDLING**\nIf intent is unclear:\n→ Do NOT route\n→ Ask clarification listing interpretations\n\n**RULE 8: STEP COMPLETION HANDLING (MANDATORY)**\nWhen you receive a message \"Completed step X and waiting for user interaction\" from any step handoff:\n→ You MUST invoke the complete_step handoff for rendering\n→ After complete_step, wait for user response\n→ Once user responds, proceed to the next appropriate step handoff\n→ Flow: step handoff → receives \"Completed step X...\" message → complete_step → user responds → next step handoff\n\n**RULE 9: SKIP STEP 2 HANDLING**\nWhen {{flow.skipStep2}} == true AND user confirms after step 2 message:\n→ Skip confirmation handoff\n→ Go directly to offboarding_reason_handoff (Step 3)\n\n════════════════════════════════════════════════════════════════\n⛔ ABSOLUTE RULES (STRICT)\n════════════════════════════════════════════════════════════════\n\n1. One handoff tool per turn—**no exceptions**\n2. ALWAYS follow up any \"Completed step X...\" message with complete_step\n3. ALWAYS wait for user input after each complete_step before proceeding\n4. NEVER ask for information the user has already provided\n5. If user says \"offboard supplier Microsoft\" → invoke supplier_validation_handoff immediately with supplierName=\"Microsoft\"\n6. ALWAYS invoke a handoff tool when routing triggers are matched\n7. DO NOT just respond with text when a handoff should be invoked\n8. When {{flow.Checkingmultiplesuppliers}} == \"null\" → respond with \"No suppliers found\" message, do NOT invoke any handoff\n\n════════════════════════════════════════════════════════════════\n🏁 FLOW SUMMARY (ONE STEP AT A TIME)\n════════════════════════════════════════════════════════════════\nUser: \"offboard supplier Microsoft\"\n→ supplier_validation_handoff\n[If multiple suppliers found]\n\"Completed step 1...\" → complete_step → wait for user\nUser selects supplier → confirmation → \"Completed step 2...\" → complete_step → wait for user\nUser confirms → offboarding_reason_handoff → \"Completed step 3...\" → complete_step → wait for user\n...continue to step 4, 5...\nUser clicks \"Create Request\" → request_creation_handoff → \"Completed step 5...\" → complete_step → wait for user\nUser clicks \"Send For Validation\" → send_for_validation_handoff → \"Completed step 6...\" → complete_step → DONE\n[If single supplier found - skipStep2=true]\n\"Completed step 2...\" → complete_step → wait for user\nUser confirms → offboarding_reason_handoff (SKIP step 2 handoff) → \"Completed step 3...\" → complete_step → wait for user\n...continue to step 4, 5...\n[If no suppliers found - null]\n→ Respond: \"No suppliers found matching your search criteria...\"\n→ Wait for new supplier name\n\n\n════════════════════════════════════════════════════════════════\nDECISION PRINCIPLE\n════════════════════════════════════════════════════════════════\n\nAlways prioritize:\n- Correct agent selection\n- Correct handoff tool invocation\n- Clear task ownership\n- Minimal user friction\n- Controlled handoffs\n\nIf unsure - ask for clarification instead of guessing."
                     }
                 ],
                 "tools": [
                     {
-                        "_id": "b020d24b-4d70-4483-9f39-f3d055f0d2bf",
-                        "name": "complete_step",
-                        "description": "Hands off execution to the node when you see \"Completed step x and waiting for user interaction\"",
+                        "_id": "59352a42-543e-4422-a081-ab2d61118a5e",
+                        "name": "send_for_validation_handoff",
+                        "description": "\"Invoke when user clicks 'Send For Validation' after Step 5 PRF is rendered. This displays the success confirmation PV.\",",
                         "type": "tool",
                         "config": {
                             "enabled": true,
@@ -161,23 +152,21 @@
                             "type": "handoff",
                             "schema": {
                                 "type": "object",
-                                "properties": {},
+                                "properties": {
+                                    "sendForValidationOverrides": {
+                                        "type": "string",
+                                        "description": "Override data from the project request - use flow.pvresponse or nodes.prfcreaterequestformpv.result"
+                                    }
+                                },
                                 "required": [],
                                 "additionalProperties": false
                             },
                             "settings": {
-                                "nodeId": "output"
+                                "nodeId": "hu1sro2"
                             },
-                            "returnDirect": false
-                        },
-                        "variableUpdates": [
-                            {
-                                "fieldName": "thread.messages",
-                                "operation": "append",
-                                "value": " ",
-                                "role": "assistant"
-                            }
-                        ]
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
                     },
                     {
                         "_id": "655d50a3-dc5f-4165-b17b-efb6a2b5c947",
@@ -211,7 +200,7 @@
                     {
                         "_id": "3bcae21d-8357-46d3-bd15-c7582732ce5c",
                         "name": "request_creation_handoff",
-                        "description": "You must invoke the \"Project_Request_Tool\" attached using the following payload format:\n    ```json\n\t\t  {\n\t\t\t\"data\": {\n\t\t\t\t\"intake_type\": \"<intake_type>\",\n\t\t\t\t \"generalRequestType\": {\n\t\t\t\t \"name\": \"Supplier Offboarding\",\n\t\t\t\t \"code\": \"7\"\n\t\t\t},\n\t\t\t\t \"project_description\": \"<generate_description_based_on_conversation>\",\n\t\t\t\t\"suppliers\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"sourceIdentificationNumber\": \"<sourceIdentificationNo>\"\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"offboardedSupplierName\": \"<Supplier Name Being Offboarded>\",\n\t\t\t\t\"supplierOffboardReason\": {\n\t\t\t\t\t\"name\": \"<offboarding reason label or name>\",\n\t\t\t\t\t\"code\": \"<offboarding reason value or code>\"\n\t\t\t\t},\n\t\t\t\t\"is_supplier_offboarding_discussed_with_stakeholders\": \"<yes_no>\",\n                \"offboardedSupplierName\":\"<supplier_name>\",\n                \"attachmentObjList\": \"<attachments or uploaded files list>\"  \n\t\t\t},\n\t\t\t\"event\": \"<event_type>\",\n\t\t\t\"additionalData\": {}\n\t\t}\n     ```\n",
+                        "description": "You must invoke the \"Project_Request_Tool\" attached using the following payload format:\n    ```json\n\t\t  {\n\t\t\t\"data\": {\n\t\t\t\t\"intake_type\": \"<intake_type>\",\n\t\t\t\t \"generalRequestType\": {\n\t\t\t\t \"name\": \"Supplier Offboarding\",\n\t\t\t\t \"code\": \"7\"\n\t\t\t},\n\t\t\t\t \"project_description\": \"<generate_description_based_on_conversation>\", Example :Offboarding Microsoft (GEP-000010757) due to <reason>\n\t\t\t\t\"suppliers\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"sourceIdentificationNumber\": \"<sourceIdentificationNo>\"\n\t\t\t\t\t}\n\t\t\t\t],\n\t\t\t\t\"offboardedSupplierName\": \"<Supplier Name Being Offboarded>\",\n\t\t\t\t\"supplierOffboardReason\": {\n\t\t\t\t\t\"name\": \"<offboarding reason label or name>\",\n\t\t\t\t\t\"code\": \"<offboarding reason value or code>\"\n\t\t\t\t},\n\t\t\t\t\"is_supplier_offboarding_discussed_with_stakeholders\": \"<yes_no>\",\n                \"offboardedSupplierName\":\"<supplier_name>\",\n                \"attachmentObjList\": \"<attachments or uploaded files list>\"  \n\t\t\t},\n\t\t\t\"event\": \"<event_type>\",\n\t\t\t\"additionalData\": {}\n\t\t}\n     ```\n",
                         "type": "tool",
                         "config": {
                             "enabled": true,
@@ -431,6 +420,7 @@
                 "resources": [],
                 "maxIterations": 5,
                 "includeThoughts": true,
+                "streamResponse": true,
                 "structuredOutput": {
                     "enable": false,
                     "name": "",
@@ -452,12 +442,12 @@
                     "role": "assistant"
                 }
             ],
-            "width": 344,
-            "height": 158,
-            "selected": true,
+            "width": 350,
+            "height": 187,
+            "selected": false,
             "positionAbsolute": {
-                "x": 415.6154467313046,
-                "y": -82.2857142857143
+                "x": 450.60718987849714,
+                "y": -193.09290091849084
             },
             "dragging": false
         },
@@ -467,8 +457,8 @@
             "name": "getsuppliers",
             "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get-suppliers",
             "position": {
-                "x": 415.6154467313046,
-                "y": 505.8321572261857
+                "x": 666.3896059528514,
+                "y": 451.40055677499726
             },
             "deletable": true,
             "properties": {
@@ -508,7 +498,7 @@
                     "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get-suppliers"
                 },
                 "settings": {
-                    "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
                 },
                 "returnDirect": false,
                 "_meta": {
@@ -526,12 +516,12 @@
                 }
             },
             "data": {},
-            "width": 308,
-            "height": 96,
+            "width": 307,
+            "height": 95,
             "selected": false,
             "positionAbsolute": {
-                "x": 415.6154467313046,
-                "y": 502.9750143690428
+                "x": 666.3896059528514,
+                "y": 451.40055677499726
             },
             "dragging": false,
             "variableUpdates": [
@@ -549,8 +539,8 @@
             "name": "suppliergridv1",
             "description": "Description:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.",
             "position": {
-                "x": 1672.5805565110675,
-                "y": 414.9750143690428
+                "x": 1781.4437574134445,
+                "y": 310.95307279825073
             },
             "deletable": true,
             "properties": {
@@ -591,7 +581,7 @@
                     "condition": "Description:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records."
                 },
                 "settings": {
-                    "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
                 },
                 "returnDirect": false,
                 "_meta": {
@@ -611,14 +601,25 @@
             },
             "data": {},
             "width": 350,
-            "height": 112,
+            "height": 111,
             "selected": false,
             "positionAbsolute": {
-                "x": 1671.1519850824961,
-                "y": 414.9750143690428
+                "x": 1781.4437574134445,
+                "y": 310.95307279825073
             },
             "dragging": false,
             "variableUpdates": [
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
                 {
                     "fieldName": "thread.supervisor_messages",
                     "operation": "append",
@@ -633,8 +634,8 @@
             "name": "labelandbuttons",
             "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
             "position": {
-                "x": -163.56492404632925,
-                "y": 422.52992456318486
+                "x": 1781.4437574134445,
+                "y": 632.5369551686446
             },
             "deletable": true,
             "properties": {
@@ -675,7 +676,7 @@
                     "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
                 },
                 "settings": {
-                    "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
                 },
                 "returnDirect": false,
                 "_meta": {
@@ -695,14 +696,25 @@
             },
             "data": {},
             "width": 350,
-            "height": 112,
+            "height": 111,
             "selected": false,
             "positionAbsolute": {
-                "x": -163.56492404632925,
-                "y": 422.52992456318486
+                "x": 1779.9999110462209,
+                "y": 632.5369551686446
             },
             "dragging": false,
             "variableUpdates": [
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
                 {
                     "fieldName": "thread.supervisor_messages",
                     "operation": "append",
@@ -717,8 +729,8 @@
             "name": "labelandbuttons1",
             "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
             "position": {
-                "x": -157.28452919940494,
-                "y": 600.753472885239
+                "x": 70.16180125734692,
+                "y": 511.3280287997821
             },
             "deletable": true,
             "properties": {
@@ -759,7 +771,7 @@
                     "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
                 },
                 "settings": {
-                    "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
                 },
                 "returnDirect": false,
                 "_meta": {
@@ -779,14 +791,25 @@
             },
             "data": {},
             "width": 350,
-            "height": 112,
+            "height": 111,
             "selected": false,
             "positionAbsolute": {
-                "x": -157.28452919940494,
-                "y": 600.753472885239
+                "x": 70.16180125734692,
+                "y": 511.3280287997821
             },
             "dragging": false,
             "variableUpdates": [
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
                 {
                     "fieldName": "thread.supervisor_messages",
                     "operation": "append",
@@ -801,8 +824,8 @@
             "name": "labelandbuttons2",
             "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
             "position": {
-                "x": -163.56492404632925,
-                "y": 824.3597428325915
+                "x": 64.32984406614813,
+                "y": 359.5851132894133
             },
             "deletable": true,
             "properties": {
@@ -843,7 +866,7 @@
                     "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
                 },
                 "settings": {
-                    "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
                 },
                 "returnDirect": false,
                 "_meta": {
@@ -863,14 +886,25 @@
             },
             "data": {},
             "width": 350,
-            "height": 112,
+            "height": 111,
             "selected": false,
             "positionAbsolute": {
-                "x": -161.1585434071603,
-                "y": 824.3597428325915
+                "x": 62.79414842964397,
+                "y": 359.5851132894133
             },
             "dragging": false,
             "variableUpdates": [
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
                 {
                     "fieldName": "thread.supervisor_messages",
                     "operation": "append",
@@ -885,8 +919,8 @@
             "name": "getglobalcode",
             "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code",
             "position": {
-                "x": -661.3757497428978,
-                "y": 832.3597428325915
+                "x": -398.9376761389534,
+                "y": 367.5851132894133
             },
             "deletable": true,
             "properties": {
@@ -926,7 +960,7 @@
                     "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code"
                 },
                 "settings": {
-                    "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
                 },
                 "returnDirect": false,
                 "_meta": {
@@ -944,12 +978,12 @@
                 }
             },
             "data": {},
-            "width": 326,
-            "height": 96,
+            "width": 325,
+            "height": 95,
             "selected": false,
             "positionAbsolute": {
-                "x": -661.3757497428978,
-                "y": 835.1124376891346
+                "x": -398.9376761389534,
+                "y": 371.6971418286142
             },
             "dragging": false,
             "variableUpdates": [
@@ -967,8 +1001,8 @@
             "name": "projectrequesttool",
             "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Project_Request_Tool",
             "position": {
-                "x": 416.47258958844736,
-                "y": 692.2823476774912
+                "x": -423.3292459441749,
+                "y": 661.1785759910978
             },
             "deletable": true,
             "properties": {
@@ -1008,7 +1042,7 @@
                     "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Project_Request_Tool"
                 },
                 "settings": {
-                    "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
                 },
                 "returnDirect": false,
                 "_meta": {
@@ -1026,12 +1060,12 @@
                 }
             },
             "data": {},
-            "width": 350,
-            "height": 96,
+            "width": 349,
+            "height": 95,
             "selected": false,
             "positionAbsolute": {
-                "x": 416.47258958844736,
-                "y": 692.2823476774912
+                "x": -423.3292459441749,
+                "y": 661.1785759910979
             },
             "dragging": false,
             "variableUpdates": [
@@ -1049,8 +1083,8 @@
             "name": "prfcreaterequestformpv",
             "description": "Description:\nCreate Project Request\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nsave value of generated overrides 'projectRequestOverrides' to ${sendForValidationPV}",
             "position": {
-                "x": 846.225868380937,
-                "y": 684.2823476774912
+                "x": 64.32984406614813,
+                "y": 653.1785759910978
             },
             "deletable": true,
             "properties": {
@@ -1102,14 +1136,25 @@
             },
             "data": {},
             "width": 350,
-            "height": 112,
+            "height": 111,
             "selected": false,
             "positionAbsolute": {
-                "x": 846.225868380937,
-                "y": 687.1394905346341
+                "x": 62.79961902990294,
+                "y": 653.1785759910978
             },
             "dragging": false,
             "variableUpdates": [
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
                 {
                     "fieldName": "thread.supervisor_messages",
                     "operation": "append",
@@ -1124,8 +1169,8 @@
             "name": "llm_0",
             "description": "",
             "position": {
-                "x": 881.5271887972557,
-                "y": 501.3321572261857
+                "x": 1050.6539473420198,
+                "y": 447.40055677499726
             },
             "deletable": true,
             "properties": {
@@ -1179,11 +1224,11 @@
                 }
             ],
             "width": 250,
-            "height": 104,
+            "height": 103,
             "selected": false,
             "positionAbsolute": {
-                "x": 881.5271887972557,
-                "y": 502.76072865475714
+                "x": 1050.6539473420198,
+                "y": 447.4005567749972
             },
             "dragging": false
         },
@@ -1193,8 +1238,8 @@
             "name": "rule_0",
             "description": "",
             "position": {
-                "x": 1245.9181140346143,
-                "y": 445.3321572261857
+                "x": 1415.0448725793783,
+                "y": 390.90055677499726
             },
             "deletable": true,
             "properties": {
@@ -1253,12 +1298,12 @@
                 ]
             },
             "data": {},
-            "width": 272,
+            "width": 271,
             "height": 215,
             "selected": false,
             "positionAbsolute": {
-                "x": 1245.9181140346143,
-                "y": 445.3321572261857
+                "x": 1415.0448725793783,
+                "y": 388.95657104459764
             },
             "dragging": false
         },
@@ -1268,8 +1313,8 @@
             "name": "labelandbuttons4",
             "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
             "position": {
-                "x": 1672.5805565110675,
-                "y": 555.3870674203276
+                "x": 1783.0007472252767,
+                "y": 471.6144059161282
             },
             "deletable": true,
             "properties": {
@@ -1310,7 +1355,7 @@
                     "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
                 },
                 "settings": {
-                    "serverId": "ee85f3c0-f3fb-452b-b76d-921736d903fe"
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
                 },
                 "returnDirect": false,
                 "_meta": {
@@ -1330,14 +1375,25 @@
             },
             "data": {},
             "width": 350,
-            "height": 112,
+            "height": 111,
             "selected": false,
             "positionAbsolute": {
-                "x": 1672.5805565110675,
-                "y": 555.3870674203276
+                "x": 1783.0007472252767,
+                "y": 471.6144059161282
             },
             "dragging": false,
             "variableUpdates": [
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
                 {
                     "fieldName": "flow.skipStep2",
                     "operation": "set",
@@ -1348,6 +1404,151 @@
                     "operation": "append",
                     "value": "Completed step 2 and waiting for user interaction",
                     "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "nti9boi",
+            "type": "output",
+            "name": "output_0",
+            "description": "",
+            "position": {
+                "x": 1100.6539473420198,
+                "y": 5.870785242830948
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "outputMapping": {
+                    "messages": {
+                        "type": "string",
+                        "value": "{{thread.messages}}"
+                    },
+                    "selectedAgentID": {
+                        "type": "string",
+                        "value": "{{runtime.workflowMetaData.workflowId}}"
+                    },
+                    "selectedAgentName": {
+                        "type": "string",
+                        "value": "{{runtime.workflowMetaData.agentName}}"
+                    },
+                    "isPvRendered": {
+                        "type": "string",
+                        "value": "{{flow.isPvRendered}}"
+                    },
+                    "agentName": {
+                        "type": "string",
+                        "value": "{{flow.agentName}}"
+                    },
+                    "text": {
+                        "type": "string",
+                        "value": "{{nodes.supervisor.text}}"
+                    }
+                }
+            },
+            "data": {},
+            "width": 150,
+            "height": 71,
+            "selected": false,
+            "dragging": false,
+            "positionAbsolute": {
+                "x": 1103.1545372224753,
+                "y": 5.870785242830948
+            }
+        },
+        {
+            "id": "hu1sro2",
+            "type": "tool",
+            "name": "prfsentforvalidationsuccesspv0021",
+            "description": "Description:\nShow this PV on success of send for validation.\n\nNotes:\nShow this PV on success of send for validation.",
+            "position": {
+                "x": 567.6928934976936,
+                "y": 789.3285518220179
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "mcp-62e995f8-9aed-4aab-9621-45c817019856-prfsentForValidationSuccesspv0021",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Optional Markdown shown immediately before this view. Use to introduce what it shows/why it matters or give brief instructions. Omit if unnecessary. Must be valid Markdown; UI preserves formatting and spacing.",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Optional Markdown shown immediately after this view. Use for next steps, brief context/interpretation, or a transition to the next section/view. Omit if unnecessary. Must be valid Markdown; UI preserves formatting and spacing.",
+                            "type": "string"
+                        },
+                        "sendForValidationOverrides": {
+                            "description": "Description:\nUse agent history and set the value to ovverride 'sendForValidationOverrides' from '${sendForValidationPV}' \n\nNotes:\nUse agent history and set the value to ovverride 'sendForValidationOverrides' from '${sendForValidationPV}' ",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nShow this PV on success of send for validation.\n\nNotes:\nShow this PV on success of send for validation."
+                },
+                "settings": {
+                    "serverId": "62e995f8-9aed-4aab-9621-45c817019856"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"56a8778a-e705-4a1b-acf9-2eafd3029cae\",\"Version\":[0,0],\"Type\":\"partialSection\",\"Name\":\"prf_sentForValidationSuccess_pv-0.0.21\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"Show this PV on success of send for validation.\",\"Instruction\":\"Show this PV on success of send for validation.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"sendForValidationOverrides\":{\"Type\":\"data\",\"OverrideId\":\"sendForValidationOverrides\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"projectrequest\",\"Description\":\"Use agent history and set the value to ovverride \\u0027sendForValidationOverrides\\u0027 from \\u0027${sendForValidationPV}\\u0027 \",\"Instruction\":\"Use agent history and set the value to ovverride \\u0027sendForValidationOverrides\\u0027 from \\u0027${sendForValidationPV}\\u0027 \",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"}}}",
+                    "type": "partial-view"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "sendForValidationOverrides": "{{flow.pvresponse}}"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 567.6928934976936,
+                "y": 789.3285518220179
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.supervisor_messages",
+                    "operation": "append",
+                    "value": "Completed step 6 and waiting for user interaction",
+                    "role": "tool"
+                },
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
                 }
             ]
         }
@@ -1364,34 +1565,6 @@
             "targetHandle": null,
             "data": {
                 "sourceType": "start",
-                "targetType": "agent"
-            }
-        },
-        {
-            "id": "reactflow__edge-jhobp69-output",
-            "source": "jhobp69",
-            "target": "output",
-            "style": {
-                "strokeWidth": 3
-            },
-            "sourceHandle": null,
-            "targetHandle": null,
-            "data": {
-                "sourceType": "agent",
-                "targetType": "output"
-            }
-        },
-        {
-            "id": "reactflow__edge-wu9rrfn-jhobp69",
-            "source": "wu9rrfn",
-            "target": "jhobp69",
-            "style": {
-                "strokeWidth": 3
-            },
-            "sourceHandle": null,
-            "targetHandle": null,
-            "data": {
-                "sourceType": "tool",
                 "targetType": "agent"
             }
         },
@@ -1425,20 +1598,6 @@
             }
         },
         {
-            "id": "reactflow__edge-v83ozem-jhobp69",
-            "source": "v83ozem",
-            "target": "jhobp69",
-            "style": {
-                "strokeWidth": 3
-            },
-            "sourceHandle": null,
-            "targetHandle": null,
-            "data": {
-                "sourceType": "tool",
-                "targetType": "agent"
-            }
-        },
-        {
             "id": "reactflow__edge-0c267h0-5tc0ly8",
             "source": "0c267h0",
             "target": "5tc0ly8",
@@ -1450,34 +1609,6 @@
             "data": {
                 "sourceType": "tool",
                 "targetType": "tool"
-            }
-        },
-        {
-            "id": "reactflow__edge-5tc0ly8-jhobp69",
-            "source": "5tc0ly8",
-            "target": "jhobp69",
-            "style": {
-                "strokeWidth": 3
-            },
-            "sourceHandle": null,
-            "targetHandle": null,
-            "data": {
-                "sourceType": "tool",
-                "targetType": "agent"
-            }
-        },
-        {
-            "id": "reactflow__edge-fbhdluq-jhobp69",
-            "source": "fbhdluq",
-            "target": "jhobp69",
-            "style": {
-                "strokeWidth": 3
-            },
-            "sourceHandle": null,
-            "targetHandle": null,
-            "data": {
-                "sourceType": "tool",
-                "targetType": "agent"
             }
         },
         {
@@ -1493,20 +1624,6 @@
                 "isHandoff": true,
                 "sourceType": "agent",
                 "targetType": "tool"
-            }
-        },
-        {
-            "id": "reactflow__edge-jocftqw-jhobp69",
-            "source": "jocftqw",
-            "target": "jhobp69",
-            "style": {
-                "strokeWidth": 3
-            },
-            "sourceHandle": null,
-            "targetHandle": null,
-            "data": {
-                "sourceType": "tool",
-                "targetType": "agent"
             }
         },
         {
@@ -1552,21 +1669,6 @@
                 "isHandoff": true,
                 "sourceType": "agent",
                 "targetType": "tool"
-            }
-        },
-        {
-            "id": "jhobp69-handoff-b020d24b-4d70-4483-9f39-f3d055f0d2bf",
-            "source": "jhobp69",
-            "target": "output",
-            "type": "handoff",
-            "sourceHandle": "handoff",
-            "targetHandle": null,
-            "deletable": false,
-            "data": {
-                "toolId": "b020d24b-4d70-4483-9f39-f3d055f0d2bf",
-                "isHandoff": true,
-                "sourceType": "agent",
-                "targetType": "output"
             }
         },
         {
@@ -1626,20 +1728,6 @@
             }
         },
         {
-            "id": "reactflow__edge-nzh4u07-jhobp69",
-            "source": "nzh4u07",
-            "target": "jhobp69",
-            "style": {
-                "strokeWidth": 3
-            },
-            "sourceHandle": null,
-            "targetHandle": null,
-            "data": {
-                "sourceType": "tool",
-                "targetType": "agent"
-            }
-        },
-        {
             "id": "reactflow__edge-eeiinror-else-jhobp69",
             "source": "eeiinro",
             "target": "jhobp69",
@@ -1651,6 +1739,133 @@
             "data": {
                 "sourceType": "rule",
                 "targetType": "agent"
+            }
+        },
+        {
+            "id": "reactflow__edge-jhobp69-nti9boi",
+            "source": "jhobp69",
+            "target": "nti9boi",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "agent",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "reactflow__edge-wu9rrfn-nti9boi",
+            "source": "wu9rrfn",
+            "target": "nti9boi",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "reactflow__edge-nzh4u07-nti9boi",
+            "source": "nzh4u07",
+            "target": "nti9boi",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "reactflow__edge-fbhdluq-nti9boi",
+            "source": "fbhdluq",
+            "target": "nti9boi",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "reactflow__edge-v83ozem-nti9boi",
+            "source": "v83ozem",
+            "target": "nti9boi",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "reactflow__edge-jocftqw-nti9boi",
+            "source": "jocftqw",
+            "target": "nti9boi",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "reactflow__edge-5tc0ly8-nti9boi",
+            "source": "5tc0ly8",
+            "target": "nti9boi",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "jhobp69-handoff-59352a42-543e-4422-a081-ab2d61118a5e",
+            "source": "jhobp69",
+            "target": "hu1sro2",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "59352a42-543e-4422-a081-ab2d61118a5e",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-hu1sro2-nti9boi",
+            "source": "hu1sro2",
+            "target": "nti9boi",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "output"
             }
         }
     ],
@@ -1676,6 +1891,20 @@
                 "type": "string",
                 "default": "",
                 "required": false
+            },
+            {
+                "id": "var-7qlmed7yx",
+                "name": "isPvRendered",
+                "type": "boolean",
+                "default": false,
+                "required": false
+            },
+            {
+                "id": "var-39aojwfxf",
+                "name": "agentName",
+                "type": "string",
+                "default": "supplier_offboarding_assistant",
+                "required": false
             }
         ],
         "system": []
@@ -1698,14 +1927,17 @@
     "security": {
         "activities": [
             {
-                "refId": "10100002",
-                "code": "10100002",
-                "name": "Home"
+                "refId": "11300009",
+                "code": "11300009",
+                "name": "Projects - Create project request"
+            },
+            {
+                "refId": "1032000004",
+                "code": "1032000004",
+                "name": "GEP Qi - Create Request"
             }
         ]
     },
-    "isDisabled": false,
-    "enableForAutoInvoke": false,
     "publishChannels": [
         {
             "refId": "api",
@@ -1721,12 +1953,12 @@
         }
     ],
     "skills": [],
-    "createdBy": "Vanshaj.Singla1@gep.com",
-    "createdOn": "2026-01-29T06:01:52.913Z",
-    "updatedBy": "Vanshaj.Singla1@gep.com",
-    "updatedOn": "2026-01-29T06:01:52.913Z",
+    "createdBy": "anjan.bandi@gep.com",
+    "createdOn": "2026-02-05T08:06:51.488Z",
+    "updatedBy": "anjan.bandi@gep.com",
+    "updatedOn": "2026-02-05T08:06:51.488Z",
     "environment": "DEV",
     "appId": "98bed795-a280-4672-86ad-d13fa7aa83a9",
     "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
-    "version": "v1769666523009180200"
+    "version": "v1770346099216925400"
 }

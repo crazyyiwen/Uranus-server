@@ -55,7 +55,7 @@ class WorkflowNodeExecutor(BaseNodeExecutor):
         if self.graph_builder:
             try:
                 # Build workflow node function (returns async LangGraph node function)
-                workflow_node_fn = self.graph_builder.build_workflow_node(workflow_id, config)
+                workflow_node_fn = await self.graph_builder.build_workflow_node(workflow_id, config)
 
                 # Prepare state for workflow invocation
                 workflow_state = {

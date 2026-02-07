@@ -1,0 +1,3456 @@
+{
+    "agenticWorkflowId": "aadc1d6c-056b-4e47-834e-bc71837257d4",
+    "bpc": "20210511",
+    "name": "contract-termination-assistant",
+    "displayName": "Contract Termination Assistant",
+    "description": "You are an AI Contract Termination Assistant for the application \"Contract Termination Agent\".",
+    "isDisabled": false,
+    "editAs": "canvas",
+    "enableForAutoInvoke": false,
+    "fromModuleVersion": "v1770330968624601900",
+    "lastModifiedVersion": "v1770346099216925400",
+    "rebasedFromVersion": null,
+    "nodes": [
+        {
+            "id": "start",
+            "type": "start",
+            "name": "start",
+            "description": "Starting point of the workflow",
+            "position": {
+                "x": -319.7324309091324,
+                "y": 235
+            },
+            "deletable": false,
+            "selected": true,
+            "dragging": false,
+            "data": {},
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "label": "start",
+                "nodeType": "start"
+            },
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.pvresponse",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.partialViewData}}"
+                },
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": false
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.partialViewData}}",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.interface.inputs.partialViewData}}",
+                                "operator": "is not empty",
+                                "value": ""
+                            },
+                            {
+                                "field": "{{nodeOutput.interface.inputs.partialViewData}}",
+                                "operator": "!=",
+                                "value": "\"\""
+                            },
+                            {
+                                "field": "{{nodeOutput.interface.inputs.partialViewData}}",
+                                "operator": "!=",
+                                "value": "\"[]\""
+                            }
+                        ],
+                        "logicType": "OR"
+                    },
+                    "role": "user"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.message}}",
+                    "role": "user"
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.message}}",
+                    "role": "user"
+                },
+                {
+                    "fieldName": "system.userQuery",
+                    "operation": "set",
+                    "value": "{{nodeOutput.interface.inputs.message}}"
+                },
+                {
+                    "fieldName": "system.attachments",
+                    "operation": "set",
+                    "value": "{{nodeOutput.interface.inputs.attachments}}"
+                }
+            ],
+            "width": 250,
+            "height": 95,
+            "positionAbsolute": {
+                "x": -319.7324309091324,
+                "y": 235
+            }
+        },
+        {
+            "id": "rs1m186",
+            "type": "agent",
+            "name": "contract_termination_assistant",
+            "description": "",
+            "position": {
+                "x": 401.9476573803115,
+                "y": 137.78218388746228
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "agentStrategy": "react",
+                "model": {
+                    "code": "gpt-5.2",
+                    "name": "OpenAI GPT-5.2",
+                    "temperature": 0.1,
+                    "topP": 0.1
+                },
+                "promptTemplate": [
+                    {
+                        "id": "41233265-6022-47b7-9f17-20ed7a249425",
+                        "role": "system",
+                        "text": "Contract Termination Assistant\n\n## PRIORITY OVERRIDE (TOP): AGENTIC CONVERSATION + RECOVERY + BACKTRACK\nThis section has HIGHEST priority and OVERRIDES routing rules below for:\n- small talk / help / off-topic (NO tools)\n- user navigation / backtracking / re-render previous step (dynamic tool re-render)\n\nAfter handling an override case, STOP.\n\n---\n\n### 1) HANDLING OFF-TOPIC, SMALL TALK, & META-QUESTIONS (NO TOOLS)\n\nIf user asks what you can do, respond:\n\"I can guide you through every step of the contract termination process, from identifying the contract to gathering all required termination details and submitting your request for processing.\"\n\nIf user asks who built you, respond:\n\"I'm an AI agent built by GEP to help streamline contract terminations and project request creation.\"\n\nIf user asks anything irrelevant (weather, jokes, chit-chat, unrelated commands), respond:\n\"That seems unrelated to terminating a contract. I'm here to help you with contract termination requests. Shall we continue?\"\n\nIf user asks for features outside your domain (open email, schedule meetings, etc.), respond:\n\"That seems unrelated to terminating a contract. I'm here to help you with contract termination requests. Shall we continue?\"\n\nFor all above: Do NOT call any tool. STOP after responding.\n\n---\n\n### 2) INTENT-ONLY TERMINATION REQUEST (NO TOOLS)\n\nIF userMessage expresses intent to terminate BUT provides NO identifier:\n- no contract number (CDR + digits)\n- no supplier ID (PC-XXXX.XXXXXX)\n- no supplier name\n\nTHEN respond:\n\"Sure—please share the contract number (CDR...) or the supplier name/ID (PC-XXXX.XXXXXX).\"\n\nDo NOT call any tool. STOP.\n\n---\n\n### 3) USER NAVIGATION / BACKTRACK / RE-RENDER (DYNAMIC)\n\nIF userMessage indicates user wants to redo/reopen/go back/previous step/edit/change selection:\nExamples: \"I selected wrong\", \"wrong supplier\", \"show the previous step\", \"go back\", \"rerender\", \"show again\", \"edit my answer\", \"can I pick again\"\n\nTHEN determine what to re-render:\n\n#### A) User EXPLICITLY mentions what to change → Re-render that step\n\n| User mentions | Action |\n|---------------|--------|\n| supplier / supplier list / wrong supplier | Call `get_contracts_by_using_supplier_name` with most recent supplier name/ID from conversation (ignore \"Proceed :\" lines). If not recoverable, ask: \"Please share the supplier name or supplier ID (PC-XXXX.XXXXXX) so I can show the supplier list again.\" |\n| contract / contract number / wrong contract | Call `get_contracts_by_using_contract_numbers` if contract number available in history. Else ask: \"Please share the contract number (CDR...) you want to terminate.\" |\n| termination type / type / immediate or future | Call `termination_type_selection` |\n| termination date / date / change date | Call `show_termination_date_picker` |\n| reason / termination reason | Call `contractterminationreasoncards` |\n\nAfter the tool/PV renders, output completion message and STOP.\n\n#### B) User says \"go back\" / \"previous step\" WITHOUT specifying what → Re-render LAST completed step\n\n- Read stepHistory\n- Find the MOST RECENT \"Step X completed...\" marker\n- Re-call the same tool for that step:\n  | Step | Tool |\n  |------|------|\n  | Step 1 (Contract identified) | `get_contracts_by_using_contract_numbers` or `get_contracts_by_using_supplier_name` (based on how contract was found) |\n  | Step 2 (Termination type) | `termination_type_selection` |\n  | Step 3 (Date picker) | `show_termination_date_picker` |\n  | Step 4 (Reason cards) | `contractterminationreasoncards` |\n  | Step 5 (Summary) | `show_termination_summary` |\n\n- This is an explicit user request to re-render — ignore \"do not repeat\" rule for this case\n- STOP after PV\n\nIf stepHistory is empty or unclear, ask:\n\"Which part do you want to change: supplier/contract, termination type, termination date, or reason?\"\nSTOP.\n\n---\n\n### 4) FINAL INSTRUCTIONS (AGENTIC BEHAVIOR)\n\n- Maintain a friendly, efficient, on-topic, and professional tone at all times.\n- Always keep the conversation moving forward toward successful project request creation for contract termination.\n- If no contracts are found for supplier, ask user to specify a different supplier or provide contract number. Don't tell user about contract status (internal to system).\n- Do not display internal data, JSON, or technical information to the user.\n- If you are not clear on supplier name/code or contract name/code, confirm from the user instead of proceeding with any assumption.\n- In case user doesn't select any contract and says to terminate the contract, ask user to select the contract for termination. Don't assume 1st contract or any other contract from the list.\n- Handle every user query—from detailed, multi-part requests to off-topic or vague responses—smoothly and professionally.\n- **Important:** If user has already provided information for upcoming steps, strictly don't ask those questions again. Example: \"I want to terminate contract CDR0027626 immediately due to breach of contract\" → skip Termination Type question (infer \"Terminate Immediately\") and skip Reason question (infer user-provided reason).\n- **Important:** Strictly don't append any message/label before \"VIEW-START\" for any UI View. Pass label inside \"label_datamodel\" only.\n- If search responds with \"no contract found\" / \"supplier doesn't exist\" / \"ambiguity detected\", respond: \"We couldn't find any matching contracts with this supplier. Please provide a different supplier name or contract number.\"\n- Once project request is finally created and user asks follow-up questions, inform: \"Your request is already submitted. Please start a new chat for a new request.\"\n\n---\n\n\n\n\nINPUT (use these exact values)\n- userMessage =  {{system.userQuery}}\n- partialViewData = {{flow.pvresponse}}\n\nSTATE (use these exact values)\n- userDateFormat = {{flow.userDateFormat}}\n- typeSelected = {{flow.typeSelected}}\n- datevalidated = {{flow.datevalidated}}\n- formattedExpiryDate = {{flow.formattedExpiryDate}}\n- dateValidationMessage = {{flow.dateValidationMessage}}\n- hasData = {{flow.hasData}}\n- hasContractsData = {{flow.hasContractsData}}\n\nSTEP HISTORY (for step-wise execution)\n- stepHistory = {{thread.contract_termination_assistant_messages}}\n\n  Notes:\n  - Your workflow nodes should append markers like:\n    \"Step 1 completed: Contract identified — waiting for user to click Proceed with Request\"\n    \"Step 2 completed: Termination type shown — waiting for user selection\"\n  - Use stepHistory only to avoid repeating already completed steps.\n\n--------------------------------------------------------------------\n\nROLE\nYou are a Contract Termination Assistant. Your job is to route deterministically to the correct tool and never loop.\n\nYou are a deterministic router with data validation capabilities, not a conversational assistant.\n\nRules:\n- Ask ONLY the next required question in sequence.\n- Ask EXACTLY one question per response.\n- Do NOT repeat, paraphrase, summarize, confirm, or reference any previous user input. Untile it is explicitly mentioned in instructions.\n- Do NOT restate descriptions, details, or free-text provided by the user.\n- Do NOT say acknowledgements (e.g., “Got it”, “Thanks”, “So you mean…”).\n- Do NOT reason, infer, assume, or add meaning beyond the user’s explicit input.\n- Do NOT combine context from previous answers into the next question.\n\nBehavior:\n- Silently accept user input as-is.\n- Move to the next predefined question.\n- If required information is missing, ask the next predefined question without clarification or inference.\n\nNON‑NEGOTIABLE OUTPUT POLICY\n- If a tool call is required, output ONLY the valid tool call JSON (no natural language).\n- After a partial view is rendered, do not output text; wait for the next user action and route again.\n\n--------------------------------------------------------------------\n\nCoVe (silent verification before choosing a tool)\nBefore selecting any tool, verify:\n1) What step we are in using STATE + partialViewData + stepHistory.\n2) Which step is already completed (avoid repeating it).\n3) Whether this message is a PV action:\n   - \"Proceed : <SupplierName>\" (SupplierGrid selection)\n   - \"Terminate Selected Contract\" (Contract Grid selection)\n   - \"Proceed with Request\" (Contract Summary PV)\n   - \"Terminate for a Future Date\" / \"Terminate Immediately\" (Termination Type PV)\n   - \"Proceed\" with a date in partialViewData (Date Picker PV)\n   - reason text (Reason Cards PV)\n   - \"Create Request\" (Summary PV)\n\nIf you detect that the user action belongs to a later step, NEVER route back to earlier steps.\n\n--------------------------------------------------------------------\n\n--------------------------------------------------------------------\n\n⚠️ AMBIGUITY HANDLING GUIDELINES\n\nBefore routing to a tool, check if the input is ambiguous:\n\n1) If user says \"I want to terminate contract with supplier\" (no name/code given):\n   → Ask: \"Please provide the supplier name or supplier code.\"\n\n2) If user says \"I want to terminate contract for <value>\" or \"with <value>\" where:\n   - <value> is alphanumeric (possibly with hyphens like ABC-123)\n   - NO explicit qualifier words like \"supplier\", \"supplier code\", \"contract\", \"contract number\"\n   → Treat as AMBIGUOUS\n   → Ask: \"Does '<value>' refer to a supplier partner code or a contract number?\"\n   → Wait for user confirmation before proceeding\n\n3) EXCEPTIONS (NOT ambiguous - proceed directly):\n   - If <value> is plain text like \"Acme Corp\", \"testsupplier\", \"omega inc\" (no hyphens/numbers) → Treat as supplier name\n   - If <value> starts with \"CDR\" (e.g., CDR0027626) → Treat as contract number\n   - If <value> starts with \"PC-\" (e.g., PC-2025.003552) → Treat as supplier identification number\n   - If user includes qualifier words like \"supplier\", \"contract number\" → Follow their intent\n   - If previous conversation already clarifies → Don't ask again\n\n4) PATTERN RECOGNITION:\n   - CDRxxxxxx → Contract number → use get_contracts_by_using_contract_numbers\n   - PC-XXXX.XXXXXX → Supplier ID → use get_contracts_by_using_supplier_name (pass as supplierIdentificationNumber)\n   - Plain text → Supplier name → use get_contracts_by_using_supplier_name (pass as supplierName)\n\n--------------------------------------------------------------------\n\n⛔ CRITICAL ROUTING RULES (priority order — evaluate top to bottom)\n\n0) USER CONTEXT\nIf userDateFormat is empty:\n→ call get_user_details\n\n0.5) SUPPLIER HAS NO CONTRACTS (avoid loops)\nIf hasContractsData = false:\n→ First check if userMessage is a NEW supplier/contract search:\n   - If userMessage contains a contract number (CDRxxxxxx) → proceed to Step 1A (call get_contracts_by_using_contract_numbers)\n   - If userMessage contains a supplier ID (PC-XXXX.XXXXXX) → proceed to Step 1B (call get_contracts_by_using_supplier_name)\n   - If userMessage is plain text that looks like a supplier name (e.g., \"hdfc\", \"acme corp\", \"tata\") AND userMessage is NOT one of [\"Proceed\", \"Proceed with Request\", \"Terminate Selected Contract\", \"retry\", \"Create Request\"] → proceed to Step 1B (call get_contracts_by_using_supplier_name with supplierName = userMessage)\n→ Otherwise (if userMessage does not match any new search pattern):\n   → do not call any tool\n   → respond:\n   \"No Live contracts are available for the selected supplier. Please choose another supplier or provide a contract number.\"\nWhy this fixes the issue:\nScenario\tBefore\tAfter\nUser says \"hdfc\" after Microsoft had no contracts\t❌ Blocked by rule 0.5, shows error\t✅ Recognized as new supplier search, calls get_contracts_by_using_supplier_name with \"hdfc\"\nUser says \"CDR0027626\" after Microsoft had no contracts\t❌ Blocked\t✅ Proceeds to Step 1A\nUser says \"ok\" or \"proceed\" after no contracts\t✅ Shows error\t✅ Shows error (correct)\nThe key change is adding a check for new search patterns BEFORE blocking the tool calls. This allows the user to provide a different supplier name and continue the flow.\n\nGood\nBad\n\n-----------------------------\nSTEP 1: CONTRACT IDENTIFICATION\n-----------------------------\n\n1C) Supplier Selection from Supplier Grid (SupplierGridV1)\nIf userMessage starts with \"Proceed :\" AND partialViewData contains \"sourceIdentificationNo\":\n→ call get_contracts_for_selected_supplier\nNotes:\n- Extract supplierSourceIdentificationNo from partialViewData.sourceIdentificationNo\n- Extract supplierName from partialViewData.legalCompanyName OR from the userMessage after \"Proceed :\"\n- Always pass status: [\"Live\"]\n\n1D) Contract Selection from Contract Grid\nIf userMessage is exactly \"Terminate Selected Contract\" AND partialViewData contains \"contractNumber\":\n→ call get_contracts_by_using_contract_numbers\nNotes:\n- Extract contractNumber from partialViewData (selectedGridRows / contract_grid selection context)\n- Always pass status: [\"Live\"]\n\n1A) Direct Contract Number (format: CDRxxxxxx like CDR0027626)\nIf hasData is not \"true\" AND userMessage contains a contract number:\n→ call get_contracts_by_using_contract_numbers\n\n1B) Supplier Name OR Supplier Identification Number\nIf hasData is not \"true\" AND userMessage contains a supplier name OR supplier ID (format: PC-XXXX.XXXXXX like PC-2025.003552):\n→ call get_contracts_by_using_supplier_name\nNotes:\n- If supplier ID (PC-2025.003552) → pass as supplierIdentificationNumber\n- If supplier name (\"Acme Corp\") → pass as supplierName\n- Always pass status: [\"Live\"]\n\n1X) Clarification (user wants to terminate but gave no usable contract/supplier)\nIf hasData is not \"true\" AND userMessage is about termination BUT does NOT contain a contract number AND does NOT contain a supplier name/code:\n→ do not call any tool\n→ respond:\n\"The contract <contract_number> you provided is not in Live status, or you do not have access to it, so it is not eligible for termination. Please provide a different contract number.\"\n- When  that data is false and when you displayed error message then directly route to output node instead of calling any tool.\n\n-----------------------------\nSTEP 2+: TERMINATION FLOW (after contract is identified)\n-----------------------------\n\n2) Proceed With Request → Show termination type options\nIf userMessage is exactly \"Proceed with Request\" AND typeSelected = false:\n→ call termination_type_selection\n\nIf userMessage is exactly \"Proceed with Request\" AND typeSelected = true:\n→ do not call any tool (wait for the next explicit user action)\n\n3) DATE PICKER “PROCEED”\nIf userMessage is exactly \"Proceed\" AND partialViewData contains \"startDate\":\n→ call validate_termination_date\nNEVER call termination_type_selection for this case.\n\n4) RETRY\nIf userMessage is exactly \"retry\" AND datevalidated = false:\n→ call show_termination_date_picker\n\nIf userMessage is exactly \"retry\" AND datevalidated = true:\n→ call contractterminationreasoncards\n\n5) TERMINATION TYPE CHOICES (AFTER TYPE PV)\nIf userMessage is exactly \"Terminate for a Future Date\":\n→ call show_termination_date_picker\nNEVER call termination_type_selection for this case.\n\nIf userMessage is exactly \"Terminate Immediately\":\n→ call validate_termination_date (isImmediateTermination=\"Yes\" and requestedTerminationDate=today)\nNEVER call termination_type_selection for this case.\n\n6) TERMINATION REASON (AFTER REASON CARDS)\nIf datevalidated = true AND userMessage is not one of:\n  - \"Proceed\"\n  - \"Proceed with Request\"\n  - \"Terminate for a Future Date\"\n  - \"Terminate Immediately\"\n  - \"Create Request\"\n  - \"retry\"\n…then treat it as a reason selection:\n→ call show_termination_summary\nNEVER call termination_type_selection for this case.\n\n7) CREATE REQUEST\nIf userMessage is exactly \"Create Request\":\n→ call create_project_request\nMandatory: include data.generalRequestType = {\"name\":\"Contract Terminations\",\"code\":\"8\"}\n\n8) FALLBACK\nIf none of the above rules match:\n→ do not call any tool (wait for explicit user action)."
+                    }
+                ],
+                "tools": [
+                    {
+                        "_id": "f4304b15-1b27-49b5-9e47-1ff7e7177561",
+                        "name": "send_for_validation_last_step",
+                        "description": "invoke this at the last final step to send for validation",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {},
+                                "required": [],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "ery9wwb"
+                            },
+                            "returnDirect": false
+                        }
+                    },
+                    {
+                        "_id": "ef9acc81-08ca-4b98-9e80-c25b1853cf40",
+                        "name": "get_user_details",
+                        "description": "Get user context including preferred date format.\n\nCall this FIRST before any contract termination operation if user's preferred date format {{flow.userDateFormat}} is empty.\n\nNo parameters needed - just invoke this handoff.\n\nThis retrieves:\n- User's preferred date format (e.g., DD-MM-YYYY, MM/DD/YYYY)\n- Other user context information\n\nAfter this handoff completes, the date format will be stored in {{flow.userDateFormat}}.",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {},
+                                "required": [],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "5yj69do"
+                            },
+                            "returnDirect": false
+                        }
+                    },
+                    {
+                        "_id": "7a970224-4da2-46f9-ba68-25c3343ba77b",
+                        "name": "get_contracts_for_selected_supplier",
+                        "description": "Use this tool ONLY when user selects a supplier from the supplier grid (multiple suppliers scenario).\n\nDO NOT use when user directly provides a supplier identification number - use get_contracts_by_using_supplier_name instead.\n \nRequired parameters:\n- data.supplierSourceIdentificationNo: The selected supplier's identification number\n- data.supplierName: The selected supplier's name\n- data.partnerCode: Unique partner code associated with the supplier\n- data.partnerStatus: Current status of the partner\n- data.onboardingStatus: Current onboarding status of the supplier\n- data.status: Always pass [\"Live\"]",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "type": "object",
+                                        "properties": {
+                                            "supplierSourceIdentificationNo": {
+                                                "type": "string",
+                                                "description": "The selected supplier's source identification number"
+                                            },
+                                            "supplierName": {
+                                                "type": "string",
+                                                "description": "The selected supplier's name"
+                                            },
+                                            "partnerCode": {
+                                                "type": "string",
+                                                "description": "Unique partner code associated with the supplier"
+                                            },
+                                            "partnerStatus": {
+                                                "type": "string",
+                                                "description": "Current status of the partner"
+                                            },
+                                            "onboardingStatus": {
+                                                "type": "string",
+                                                "description": "Current onboarding status of the supplier"
+                                            },
+                                            "status": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "description": "Contract status filter. Always use [\"Live\"]"
+                                            }
+                                        },
+                                        "required": [
+                                            "supplierSourceIdentificationNo",
+                                            "status"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "mi1x0ul"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "ad03e888-95c2-4789-866e-bd05cb114ebc",
+                        "name": "create_project_request",
+                        "description": "## WHEN TO CALL\nUser clicks \"Create Request\" after reviewing summary.\n\n## ⚠️ REQUIRED FIELDS - MUST INCLUDE ALL\n\n{\n  \"data\": {\n    \"intake_type\": \"Contract Termination Intake\",\n    \"generalRequestType\": {\"name\": \"Contract Terminations\", \"code\": \"8\"},\n    \"project_description\": \"Contract termination request for <contractNumber>\",\n    \"contractNumber\": \"<from contract lookup>\",\n    \"suppliers\": [{\"sourceIdentificationNumber\": \"<value or N/A>\"}],\n    \"terminatingReason\": {\"name\": \"<reason>\", \"code\": \"<code>\"},\n    \"startTermination\": {\"name\": \"<type>\", \"code\": \"<1 or 2>\"},\n    \"discussSupplierTermination\": \"No\",\n    \"contractTerminateDate\": \"<YYYY/MM/DD>\",\n    \"attachmentObjList\": []\n  }\n}\n\n## ❌ THE AGENT KEEPS MISSING THIS FIELD:\ngeneralRequestType: {\"name\": \"Contract Terminations\", \"code\": \"8\"}\nALWAYS INCLUDE IT!\n\n## FIELD CHECKLIST (verify before sending):\n□ intake_type = \"Contract Termination Intake\"\n□ generalRequestType = {\"name\": \"Contract Terminations\", \"code\": \"8\"}\n□ project_description = \"Contract termination request for <contractNumber>\"\n□ contractNumber = from contract data\n□ suppliers = [{sourceIdentificationNumber: \"N/A\" or actual value}]\n□ terminatingReason = {name: \"<reason>\", code: \"<1-10>\"}\n□ startTermination = {name: \"<type>\", code: \"1\" or \"2\"}\n□ discussSupplierTermination = \"No\"\n□ contractTerminateDate = \"YYYY/MM/DD\"\n□ attachmentObjList = []\n\n## CODES:\nstartTermination:\n- \"Terminate for a Future Date\" → code: \"1\"\n- \"Terminate Immediately\" → code: \"2\"\n\nterminatingReason:\n- \"Termination for Cause – Breach of Contract\" → \"1\"\n- \"Termination for Cause – Non-Performance\" → \"2\"\n- \"Termination for Cause – Performance Related\" → \"3\"\n- \"Termination for Cause – Service Related\" → \"4\"\n- \"Termination for Convenience – Cost Reduction\" → \"5\"\n- \"Termination for Convenience – Supplier Consolidation\" → \"6\"\n- \"Termination for Convenience – Strategic Decision\" → \"7\"\n- \"Termination for Convenience – Business Closure\" → \"8\"\n- \"Risk Related\" → \"9\"\n- \"Mutual Agreement\" → \"10\"\n\n## COMPLETE EXAMPLE:\n{\n  \"data\": {\n    \"intake_type\": \"Contract Termination Intake\",\n    \"generalRequestType\": {\"name\": \"Contract Terminations\", \"code\": \"8\"},\n    \"project_description\": \"Contract termination request for CDR0027626\",\n    \"contractNumber\": \"CDR0027626\",\n    \"suppliers\": [{\"sourceIdentificationNumber\": \"N/A\"}],\n    \"terminatingReason\": {\"name\": \"Termination for Convenience – Supplier Consolidation\", \"code\": \"6\"},\n    \"startTermination\": {\"name\": \"Terminate for a Future Date\", \"code\": \"1\"},\n    \"discussSupplierTermination\": \"No\",\n    \"contractTerminateDate\": \"2026/01/31\",\n    \"attachmentObjList\": []\n  }\n}",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "type": "object",
+                                        "properties": {
+                                            "intake_type": {
+                                                "type": "string",
+                                                "description": "Always use: Contract Termination Intake"
+                                            },
+                                            "generalRequestType": {
+                                                "type": "object",
+                                                "description": "Always use: {name: Contract Terminations, code: 8}"
+                                            },
+                                            "project_description": {
+                                                "type": "string",
+                                                "description": "Brief description of termination request"
+                                            },
+                                            "terminatingReason": {
+                                                "type": "object",
+                                                "description": "Reason object: {name: <reason>, code: <code>}"
+                                            },
+                                            "startTermination": {
+                                                "type": "object",
+                                                "description": "{name: <type>, code: 1 for Future Date, 2 for Immediately}"
+                                            },
+                                            "discussSupplierTermination": {
+                                                "type": "string",
+                                                "description": "Yes or No"
+                                            },
+                                            "contractTerminateDate": {
+                                                "type": "string",
+                                                "description": "Termination date in YYYY/MM/DD format"
+                                            },
+                                            "contractNumber": {
+                                                "type": "string",
+                                                "description": "The contract number"
+                                            },
+                                            "suppliers": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object"
+                                                },
+                                                "description": "Array with supplier: [{sourceIdentificationNumber: <code>}]"
+                                            },
+                                            "attachmentObjList": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object"
+                                                },
+                                                "description": "Array of attachments (can be empty [])"
+                                            }
+                                        },
+                                        "required": [
+                                            "intake_type",
+                                            "generalRequestType",
+                                            "contractNumber",
+                                            "terminatingReason",
+                                            "startTermination",
+                                            "contractTerminateDate"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "qvdpb75"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "4f8ab931-6ac2-456f-9f77-de107a90cf2c",
+                        "name": "show_termination_summary",
+                        "description": "Route to display termination summary after user selects termination reason.\nUse when user has selected a reason from the termination reason cards.\n\nParameters (all inside data object):\n- contractNumber: The contract number (string)\n- supplierName: Supplier name or \"N/A\" if not available (string)\n- expiryDate: Contract expiry date in DD-MM-YYYY format (string)\n- terminationType: \"Terminate Immediately\" or \"Terminate for a Future Date\" (string)\n- terminationDate: The termination date in DD-MM-YYYY format (string)\n- terminationReason: The reason user selected from cards (string)\n\nIMPORTANT: \n- All dates must be in DD-MM-YYYY format (e.g., \"14-05-2026\")\n- Convert any ISO dates before passing\n\nExample:\n{\n  \"data\": {\n    \"contractNumber\": \"CDR0027626\",\n    \"supplierName\": \"N/A\",\n    \"expiryDate\": \"14-05-2026\",\n    \"terminationType\": \"Terminate for a Future Date\",\n    \"terminationDate\": \"01-03-2026\",\n    \"terminationReason\": \"Termination for Cause – Performance Related\"\n  }\n}",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "type": "object",
+                                        "properties": {
+                                            "contractNumber": {
+                                                "type": "string",
+                                                "description": "The contract number"
+                                            },
+                                            "supplierName": {
+                                                "type": "string",
+                                                "description": "Supplier name or N/A"
+                                            },
+                                            "expiryDate": {
+                                                "type": "string",
+                                                "description": "Contract expiry date"
+                                            },
+                                            "terminationType": {
+                                                "type": "string",
+                                                "description": "Terminate Immediately or Terminate for a Future Date"
+                                            },
+                                            "terminationDate": {
+                                                "type": "string",
+                                                "description": "The termination date"
+                                            },
+                                            "terminationReason": {
+                                                "type": "string",
+                                                "description": "The reason for termination"
+                                            }
+                                        },
+                                        "required": [
+                                            "contractNumber",
+                                            "terminationType",
+                                            "terminationDate",
+                                            "terminationReason"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "t8bed3t"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "2bf3dc7c-eb33-4c19-af66-c94bb38ddbf5",
+                        "name": "validate_termination_date",
+                        "description": "Validates requested termination date against contract expiry date.\n\nWHEN TO CALL:\n1. User selects \"Terminate Immediately\" → Use today's date\n2. User clicks \"Proceed\" after date picker → Extract date from partialViewData\n\nPAYLOAD:\n{\n  \"data\": {\n    \"expiryDate\": \"YYYY/MM/DD\",\n    \"requestedTerminationDate\": \"YYYY/MM/DD\",\n    \"isImmediateTermination\": \"Yes\" or \"No\",\n    \"isPerpetual\": \"Yes\" or \"No\"\n  }\n}\n\nDATE EXTRACTION:\n- From partialViewData: {\"startDate\":\"2026-01-31\"} → Convert to \"2026/01/31\"\n- Contract expiry: Use {{flow.formattedExpiryDate}} converted to YYYY/MM/DD\n- Today's date for immediate termination\n\nEXAMPLE - Future Date:\n{\n  \"data\": {\n    \"expiryDate\": \"2026/05/14\",\n    \"requestedTerminationDate\": \"2026/01/31\",\n    \"isImmediateTermination\": \"No\",\n    \"isPerpetual\": \"No\"\n  }\n}\n\nEXAMPLE - Immediate:\n{\n  \"data\": {\n    \"expiryDate\": \"2026/05/14\",\n    \"requestedTerminationDate\": \"2026/01/30\",\n    \"isImmediateTermination\": \"Yes\",\n    \"isPerpetual\": \"No\"\n  }\n}",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "type": "object",
+                                        "properties": {
+                                            "expiryDate": {
+                                                "type": "string",
+                                                "description": "Contract expiry date in YYYY/MM/DD format"
+                                            },
+                                            "requestedTerminationDate": {
+                                                "type": "string",
+                                                "description": "User selected termination date in YYYY/MM/DD format"
+                                            },
+                                            "isImmediateTermination": {
+                                                "type": "string",
+                                                "description": "Yes if immediate termination, No if future date"
+                                            },
+                                            "isPerpetual": {
+                                                "type": "string",
+                                                "description": "Yes or No based on contract data"
+                                            }
+                                        },
+                                        "required": [
+                                            "expiryDate",
+                                            "requestedTerminationDate",
+                                            "isImmediateTermination",
+                                            "isPerpetual"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "ogkusds"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "fc6ed8a6-5167-487d-b436-b1d08f299ba6",
+                        "name": "show_termination_date_picker",
+                        "description": "Show date picker for contract termination date selection.\n\nWHEN TO CALL:\n- User selects \"Terminate for a Future Date\"\n\nREQUIRED PARAMETER:\nDateValidationMessage - HTML label with expiry date info\n\nCONSTRUCT MESSAGE:\nGot it! Now, let's capture the <strong>new contract termination date.</strong><br><strong>Current</strong> end date is [EXPIRY_DATE]\n\nReplace [EXPIRY_DATE] with {{flow.formattedExpiryDate}}\n\nEXAMPLE:\n{\n  \"DateValidationMessage\": \"Got it! Now, let's capture the <strong>new contract termination date.</strong><br><strong>Current</strong> end date is 14-05-2026\"\n}",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "DateValidationMessage": {
+                                        "type": "string",
+                                        "description": "HTML label for the date picker. Include contract expiry date in DD-MM-YYYY format. For errors, include the validation error message."
+                                    }
+                                },
+                                "required": [
+                                    "DateValidationMessage"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "bvf0028"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "460f5fac-2025-407a-bdc3-1dcfedb3f85f",
+                        "name": "termination_type_selection",
+                        "description": "# termination_type_selection\n\n## ⛔⛔⛔ CRITICAL GUARD ⛔⛔\n*** If User has already selected the type of termiantion, then do not route to it again even if typeSelected is false\n- ONLY call when: userMessage == \"Proceed with Request\" AND flow.typeSelected == false\n- NEVER call when:\n  - flow.typeSelected == true\n  - userMessage == \"Proceed\" AND partialViewData has startDate (date picker Proceed)\n  - userMessage == \"Terminate Immediately\" or \"Terminate for a Future Date\"\n  - userMessage == \"retry\"\n\nIF typeSelected = true → DO NOT CALL THIS TOOL\nIF typeSelected = false → OK TO CALL\n\n## WHEN TO CALL\n- User clicks \"Proceed with Request\" AND typeSelected = false\n\n## NEVER CALL WHEN\n- typeSelected = true\n- User says \"Terminate Immediately\" (already past this step)\n- User says \"Terminate for a Future Date\" (already past this step)\n- User says \"Proceed\" after date picker (call validate_termination_date instead)\n- User says \"retry\" (determine context from datevalidated)\n\n## NO PARAMETERS NEEDED",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {},
+                                "required": [],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "pw0nceb"
+                            },
+                            "returnDirect": false
+                        }
+                    },
+                    {
+                        "_id": "4a307cef-42ba-4e29-bc01-a66405099374",
+                        "name": "get_contracts_by_using_supplier_name",
+                        "description": "Use this tool to find contracts by supplier name OR supplier identification number.\n\nExamples:\n- \"terminate contract with Acme Corp\" → pass supplierName: \"Acme Corp\"\n- \"terminate contract with PC-2025.003552\" → pass supplierIdentificationNumber: \"PC-2025.003552\"\n\nDO NOT use for contract numbers like CDR0027626.\n\nParameters:\n- data.supplierName: Use when user provides a name\n- data.supplierIdentificationNumber: Use when user provides PC-XXXX.XXXXXX format\n- data.status: Always pass [\"Live\"]",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "type": "object",
+                                        "properties": {
+                                            "supplierName": {
+                                                "type": "string",
+                                                "description": "The supplier name to search for"
+                                            },
+                                            "supplierIdentificationNumber": {
+                                                "type": "string",
+                                                "description": "The supplier identification number (use when user provides PC-XXXX.XXXXXX format like PC-2025.003552)"
+                                            },
+                                            "status": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "description": "Contract status filter. Use [\"Live\"]"
+                                            }
+                                        },
+                                        "required": [],
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "cnru7aq"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "460f2edf-f3f0-4096-b5fe-292f6fccf1f9",
+                        "name": "get_contracts_by_using_contract_numbers",
+                        "description": "Use this tool ONLY for contract numbers (format: CDRxxxxxx).\n\nExamples:\n- \"terminate contract CDR0027626\" → Use this tool\n- Contract numbers always start with CDR\n\nDO NOT use for supplier IDs like PC-2025.003552 (use get_contracts_by_using_supplier_name instead)\n\nInvoke with payload:\n{\n  \"data\": {\n    \"contractNumber\": \"<contract_number>\",\n    \"status\": [\"Live\"]\n  }\n}\n\nExample: If user says \"terminate contract CDR0027626\", pass:\n{\n  \"data\": {\n    \"contractNumber\": \"CDR0027626\", \n    \"status\": [\"Live\"]\n  }\n}",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "type": "object",
+                                        "properties": {
+                                            "contractNumber": {
+                                                "type": "string",
+                                                "description": "The contract number to look up (e.g., CDR0027626)"
+                                            },
+                                            "status": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "description": "Contract status filter. Use [\"Live\"] for active contracts."
+                                            }
+                                        },
+                                        "required": [
+                                            "contractNumber",
+                                            "status"
+                                        ],
+                                        "additionalProperties": false
+                                    }
+                                },
+                                "required": [
+                                    "data"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "xgkq21i"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        },
+                        "variableUpdates": [
+                            {
+                                "fieldName": "thread.messages",
+                                "operation": "append",
+                                "value": " ",
+                                "role": "assistant"
+                            }
+                        ]
+                    }
+                ],
+                "resources": [],
+                "maxIterations": 5,
+                "includeThoughts": true,
+                "streamResponse": true,
+                "structuredOutput": {
+                    "enable": false,
+                    "name": "",
+                    "description": "",
+                    "schema": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.text}}",
+                    "role": "assistant"
+                }
+            ],
+            "width": 350,
+            "height": 187,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 401.9476573803115,
+                "y": 137.78218388746228
+            },
+            "dragging": false
+        },
+        {
+            "id": "xgkq21i",
+            "type": "tool",
+            "name": "getcontractbycontractnumber",
+            "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get_Contract_By_Contract_Number",
+            "position": {
+                "x": 348.865914849706,
+                "y": 1082.4070952362438
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-GetContractByContractNumber-37",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "description": "Event to execute DAC policy in server function.",
+                            "type": "string"
+                        },
+                        "data": {
+                            "type": "string",
+                            "description": "Payload used to execute the function."
+                        },
+                        "additionalData": {
+                            "type": "string",
+                            "description": "Any additional data used by the function."
+                        }
+                    },
+                    "required": [
+                        "data"
+                    ],
+                    "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get_Contract_By_Contract_Number"
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "functionId": "64ba79d0-e445-42cc-9824-22bdeca4003c",
+                    "type": "ssf-call",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "event": "\"\"",
+                    "data": "{{nodes.contract_termination_assistant.toolResults.get_contracts_by_using_contract_numbers.data}}",
+                    "additionalData": "{}"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 344.8752826040241,
+                "y": 1082.4070952362438
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.result}}",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "66rs11l",
+            "type": "tool",
+            "name": "labelandbuttons",
+            "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
+            "position": {
+                "x": 1438.567716234688,
+                "y": 1082.4070952362438
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-labelandbuttons-61",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Text message to be rendered before the content of the partial view",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Text message to be rendered after the content of the partial view",
+                            "type": "string"
+                        },
+                        "label_datamodel": {
+                            "description": "Description:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.",
+                            "type": "string"
+                        },
+                        "buttons_datamodel": {
+                            "description": "Description:\n\n\nNotes:\n",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"e1a380cd-75d0-4534-ac80-aaa5301718ee\",\"Version\":[1,0],\"Type\":\"partialView\",\"Name\":\"label_and_buttons\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This partial view is responsible for rendering the label and buttons/options.\",\"Instruction\":\"This partial view is responsible for rendering the label and buttons/options.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                    "type": "partial-view",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "label_datamodel": "{{flow.formattedContractSummary}}",
+                    "buttons_datamodel": "[{\"label\": \"Proceed with Request\",\"value\": \"Proceed with Request\"}]"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1438.567716234688,
+                "y": 1080.3852452315305
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "Completed step 1 and waiting for user interaction",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "pw0nceb",
+            "type": "tool",
+            "name": "labelandbuttons1",
+            "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
+            "position": {
+                "x": -598.6086403871004,
+                "y": 737.1141848947764
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-labelandbuttons-61",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Text message to be rendered before the content of the partial view",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Text message to be rendered after the content of the partial view",
+                            "type": "string"
+                        },
+                        "label_datamodel": {
+                            "description": "Description:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.",
+                            "type": "string"
+                        },
+                        "buttons_datamodel": {
+                            "description": "Description:\n\n\nNotes:\n",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"e1a380cd-75d0-4534-ac80-aaa5301718ee\",\"Version\":[1,0],\"Type\":\"partialView\",\"Name\":\"label_and_buttons\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This partial view is responsible for rendering the label and buttons/options.\",\"Instruction\":\"This partial view is responsible for rendering the label and buttons/options.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                    "type": "partial-view",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "label_datamodel": "Alright, let's get started on the termination. To begin, how would you like to proceed with the termination?",
+                    "buttons_datamodel": "[{\"label\": \"Terminate for a Future Date\",\"value\": \"Terminate for a Future Date\"},{\"label\": \"Terminate Immediately\",\"value\": \"Terminate Immediately\"}]"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -598.6086403871004,
+                "y": 738.8177765027408
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.typeSelected",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "[STEP_MARKER: termination_type_shown] User must now choose 'Terminate Immediately' or 'Terminate for a Future Date'. When they respond, DO NOT call termination_type_selection again",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "erhf17m",
+            "type": "tool",
+            "name": "datepickercontractterminate",
+            "description": "Description:\nThis view is responsible for showing the date.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis view is responsible for showing the date.",
+            "position": {
+                "x": -626.9888155109336,
+                "y": 951.5225313111484
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-datepickercontractterminate-90",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Text message to be rendered before the content of the partial view",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Text message to be rendered after the content of the partial view",
+                            "type": "string"
+                        },
+                        "contractDurationDataModelId": {
+                            "description": "Description:\n\n\nNotes:\n",
+                            "type": "string"
+                        },
+                        "date_label": {
+                            "description": "Description:\n\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `date_label` override to pass data to form label.",
+                            "type": "string"
+                        },
+                        "contextSelectionMessage": {
+                            "description": "Description:\n\n\nNotes:\n**Set the value of `contextSelectionMessage` with `\"Update the date based on these value\"`.",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nThis view is responsible for showing the date.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis view is responsible for showing the date."
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"c7a829d5-9b3f-4cfc-b858-89a9d960cfc7\",\"Version\":[0,0],\"Type\":\"partialView\",\"Name\":\"date_picker_contract_terminate\",\"Icon\":null,\"Channel\":\"auto\",\"Description\":\"This view is responsible for showing the date.\",\"Instruction\":\"This view is responsible for showing the date.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"contractDurationDataModelId\":{\"Type\":\"data\",\"OverrideId\":\"contractDurationDataModelId\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"contractDurationDataModelId\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"},\"date_label\":{\"Type\":\"data\",\"OverrideId\":\"date_label\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"date_label\",\"Description\":\"\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060date_label\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"contextSelectionMessage\":{\"Type\":\"data\",\"OverrideId\":\"contextSelectionMessage\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"contextSelectionMessage\",\"Description\":\"\",\"Instruction\":\"**Set the value of \\u0060contextSelectionMessage\\u0060 with \\u0060\\u0022Update the date based on these value\\u0022\\u0060.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"}}}",
+                    "type": "partial-view",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "contractDurationDataModelId": "{\"startDate\":\"\"}",
+                    "date_label": "{{flow.dateValidationMessage}}",
+                    "contextSelectionMessage": "Update the contract termination date based on these values"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -626.9888155109336,
+                "y": 954.5615504485502
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "[STEP] Date picker shown. When user clicks Proceed (and partialViewData has startDate), call validate_termination_date. NEVER call termination_type_selection.",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "ogkusds",
+            "type": "tool",
+            "name": "terminationdatecheck",
+            "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: termination_date_check",
+            "position": {
+                "x": -1075.9352797119914,
+                "y": 1233.592164436037
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-terminationdatecheck-26",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "description": "Event to execute DAC policy in server function.",
+                            "type": "string"
+                        },
+                        "data": {
+                            "type": "string",
+                            "description": "Payload used to execute the function."
+                        },
+                        "additionalData": {
+                            "type": "string",
+                            "description": "Any additional data used by the function."
+                        }
+                    },
+                    "required": [
+                        "data"
+                    ],
+                    "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: termination_date_check"
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "functionId": "e78c9680-6421-4ca5-8434-9459fa29474c",
+                    "type": "ssf-call",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "event": "\"\"",
+                    "data": "{{nodes.contract_termination_assistant.toolResults.validate_termination_date.data}}",
+                    "additionalData": "{}"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -1075.9352797119914,
+                "y": 1234.099042325314
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.dateValidationMessage",
+                    "operation": "set",
+                    "value": "Expiry date cannot be before the termination date"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.result}}",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "zsav7rk",
+            "type": "rule",
+            "name": "check_validation_result",
+            "description": "",
+            "position": {
+                "x": -663.7287175291073,
+                "y": 1204.592164436037
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "rules": [
+                    {
+                        "ruleId": "r-71d7d5es",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{nodes.terminationdatecheck.result.action}}",
+                                "operator": "equals",
+                                "value": "Not Allowed"
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-else",
+                        "enable": true,
+                        "conditions": [],
+                        "logicType": "default"
+                    }
+                ]
+            },
+            "data": {},
+            "width": 350,
+            "height": 170,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -663.7287175291073,
+                "y": 1204.592164436037
+            },
+            "dragging": false
+        },
+        {
+            "id": "a4p7a78",
+            "type": "tool",
+            "name": "getglobalcode",
+            "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code",
+            "position": {
+                "x": -170.55115722274527,
+                "y": 1249.592164436037
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-GetGlobalCode-17",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "description": "Event to execute DAC policy in server function.",
+                            "type": "string"
+                        },
+                        "data": {
+                            "type": "string",
+                            "description": "Payload used to execute the function."
+                        },
+                        "additionalData": {
+                            "type": "string",
+                            "description": "Any additional data used by the function."
+                        }
+                    },
+                    "required": [
+                        "data"
+                    ],
+                    "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get Global Code"
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "functionId": "bade57a4-cf6a-4437-afc4-457310c40d7a",
+                    "type": "ssf-call",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "event": "\"\"",
+                    "data": "{\"CodeType\": \"PPST-ReasonForTermination\"}",
+                    "additionalData": "{}"
+                }
+            },
+            "data": {},
+            "width": 325,
+            "height": 95,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -170.55115722274527,
+                "y": 1249.2848684504227
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.datevalidated",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.result}}",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "rrr57fw",
+            "type": "tool",
+            "name": "contractterminationreasoncards",
+            "description": "Description:\ncontract_termination_reason_cards\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\ncontract_termination_reason_cards",
+            "position": {
+                "x": -156.19585071597714,
+                "y": 1493.4493072931796
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-contractterminationreasoncards-99",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Text message to be rendered before the content of the partial view",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Text message to be rendered after the content of the partial view",
+                            "type": "string"
+                        },
+                        "label_datamodel": {
+                            "description": "Description:\n\n\nNotes:\n",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\ncontract_termination_reason_cards\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\ncontract_termination_reason_cards"
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"2db49aba-0b5d-420e-a7d7-d9eab7be433d\",\"Version\":[0,0],\"Type\":\"partialView\",\"Name\":\"contract_termination_reason_cards\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"contract_termination_reason_cards\",\"Instruction\":\"contract_termination_reason_cards\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"}}}",
+                    "type": "partial-view",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "label_datamodel": "Understood. What is the reason for terminating this contract?"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -156.19585071597714,
+                "y": 1493.4493072931796
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "[STEP_MARKER: reason_cards_shown] User must now select a termination reason. When they respond with any reason text, call show_termination_summary.",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "t8bed3t",
+            "type": "tool",
+            "name": "labelandbuttons2",
+            "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
+            "position": {
+                "x": 693.4695465136433,
+                "y": 1277.3188239505062
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-labelandbuttons-61",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Text message to be rendered before the content of the partial view",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Text message to be rendered after the content of the partial view",
+                            "type": "string"
+                        },
+                        "label_datamodel": {
+                            "description": "Description:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.",
+                            "type": "string"
+                        },
+                        "buttons_datamodel": {
+                            "description": "Description:\n\n\nNotes:\n",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"e1a380cd-75d0-4534-ac80-aaa5301718ee\",\"Version\":[1,0],\"Type\":\"partialView\",\"Name\":\"label_and_buttons\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This partial view is responsible for rendering the label and buttons/options.\",\"Instruction\":\"This partial view is responsible for rendering the label and buttons/options.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                    "type": "partial-view",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "label_datamodel": "     <b>Contract Number:</b> {{nodes.contract_termination_assistant.toolResults.show_termination_summary.data.contractNumber}}<br><b>Supplier Name:</b> {{nodes.contract_termination_assistant.toolResults.show_termination_summary.data.supplierName}}<br><b>Contract Expiry Date:</b> {{nodes.contract_termination_assistant.toolResults.show_termination_summary.data.expiryDate}}<br><b>How would you like to proceed with the termination?</b> {{nodes.contract_termination_assistant.toolResults.show_termination_summary.data.terminationType}}<br><b>What is the termination date?</b> {{nodes.contract_termination_assistant.toolResults.show_termination_summary.data.terminationDate}}<br><b>What is the reason for terminating this contract?</b> {{nodes.contract_termination_assistant.toolResults.show_termination_summary.data.terminationReason}}<br><br>Would you like to create the project request with these details?",
+                    "buttons_datamodel": "[{\"label\": \"Create Request\",\"value\": \"Create Request\"}]"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 693.4695465136433,
+                "y": 1277.3188239505062
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "Completed step 5 and waiting for user interaction",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "c0p4l30",
+            "type": "tool",
+            "name": "prfcreaterequestformpv",
+            "description": "Description:\nCreate Project Request\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nsave value of generated overrides 'projectRequestOverrides' to ${sendForValidationPV}",
+            "position": {
+                "x": 1130.2781912791133,
+                "y": 1493.4493072931796
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "mcp-62e995f8-9aed-4aab-9621-45c817019856-prfcreateRequestFormpv",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Text message to be rendered before the content of the partial view",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Text message to be rendered after the content of the partial view",
+                            "type": "string"
+                        },
+                        "projectRequestOverrides": {
+                            "description": "Description:\nThe value of this override can be user specific like ```json {\"documentCode\":\"&lt;documentCode&gt;\"}```\n\nNotes:\nThe value of this override can be user specific like ```json {\"documentCode\":\"&lt;documentCode&gt;\"}```",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nCreate Project Request\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nsave value of generated overrides 'projectRequestOverrides' to ${sendForValidationPV}"
+                },
+                "settings": {
+                    "serverId": "62e995f8-9aed-4aab-9621-45c817019856"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"d2801162-5faa-4e94-a6ed-39b9b4e3453a\",\"Version\":[0,0],\"Type\":\"partialSection\",\"Name\":\"prf_createRequestForm_pv\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"Create Project Request\",\"Instruction\":\"save value of generated overrides \\u0027projectRequestOverrides\\u0027 to ${sendForValidationPV}\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"projectRequestOverrides\":{\"Type\":\"data\",\"OverrideId\":\"projectRequestOverrides\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"projectRequestDM\",\"Description\":\"The value of this override can be user specific like \\u0060\\u0060\\u0060json {\\u0022documentCode\\u0022:\\u0022\\u0026lt;documentCode\\u0026gt;\\u0022}\\u0060\\u0060\\u0060\",\"Instruction\":\"The value of this override can be user specific like \\u0060\\u0060\\u0060json {\\u0022documentCode\\u0022:\\u0022\\u0026lt;documentCode\\u0026gt;\\u0022}\\u0060\\u0060\\u0060\",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"}}}",
+                    "type": "partial-view"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "projectRequestOverrides": "{{nodes.projectrequesttool.result}}"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "Completed step 6 and project request created",
+                    "role": "tool"
+                }
+            ],
+            "positionAbsolute": {
+                "x": 1130.2781912791133,
+                "y": 1493.4067732930255
+            }
+        },
+        {
+            "id": "note_horcrsm",
+            "type": "note",
+            "name": "note_0",
+            "description": "Canvas note",
+            "position": {
+                "x": -731.3208940364752,
+                "y": 195.10082726533238
+            },
+            "deletable": true,
+            "style": {
+                "minWidth": 300,
+                "minHeight": 200
+            },
+            "data": {
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "children": [
+                            {
+                                "text": "Prompt to test",
+                                "bold": true
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "children": [
+                            {
+                                "bold": true,
+                                "text": ""
+                            }
+                        ]
+                    },
+                    {
+                        "type": "paragraph",
+                        "children": [
+                            {
+                                "text": "I want to terminate contract CDR0027626"
+                            }
+                        ]
+                    }
+                ],
+                "color": "Yellow"
+            },
+            "properties": {},
+            "config": {},
+            "width": 319,
+            "height": 200,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -731.3208940364752,
+                "y": 195.10082726533238
+            },
+            "dragging": false
+        },
+        {
+            "id": "qvdpb75",
+            "type": "tool",
+            "name": "projectrequesttool",
+            "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Project_Request_Tool",
+            "position": {
+                "x": 674.0683220370944,
+                "y": 1501.4493072931796
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-ProjectRequestTool-17",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "description": "Event to execute DAC policy in server function.",
+                            "type": "string"
+                        },
+                        "data": {
+                            "type": "string",
+                            "description": "Payload used to execute the function."
+                        },
+                        "additionalData": {
+                            "type": "string",
+                            "description": "Any additional data used by the function."
+                        }
+                    },
+                    "required": [
+                        "data"
+                    ],
+                    "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Project_Request_Tool"
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "functionId": "05afc7e4-3c57-47d1-ba51-44633c06abbb",
+                    "type": "ssf-call",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "event": "\"\"",
+                    "data": "{{nodes.contract_termination_assistant.toolResults.create_project_request.data}}",
+                    "additionalData": "{}"
+                }
+            },
+            "data": {},
+            "width": 349,
+            "height": 95,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 674.0683220370944,
+                "y": 1504.698249657272
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.result}}",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "ivbrkmb",
+            "type": "llm",
+            "name": "dateformatter_llm",
+            "description": "",
+            "position": {
+                "x": 947.182714639442,
+                "y": 1085.9070952362438
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "model": {
+                    "code": "gpt-4.1",
+                    "name": "OpenAI GPT-4.1"
+                },
+                "promptTemplate": [
+                    {
+                        "id": "a462933f-3a64-4c49-8bce-7b6a2e35079f",
+                        "role": "system",
+                        "text": "You are a data formatter. Format the contract data below into HTML with dates in the user's preferred format.\n\nUSER CONTEXT:\n- User's preferred date format is {{flow.userDateFormat}}\n\nINPUT:\n- Contract Number: {{nodes.getcontractbycontractnumber.result.data.result[0].contractNumber}}\n- Contract Name: {{nodes.getcontractbycontractnumber.result.data.result[0].contractName}}\n- Contract Type: {{nodes.getcontractbycontractnumber.result.data.result[0].contractType}}\n- Contract Subtype: {{nodes.getcontractbycontractnumber.result.data.result[0].contractSubType}}\n- Status: {{nodes.getcontractbycontractnumber.result.data.result[0].stateName}}\n- Supplier Name: {{nodes.getcontractbycontractnumber.result.data.result[0].supplierName}}\n- Supplier Partner Code: {{nodes.getcontractbycontractnumber.result.data.result[0].supplierSourceIdentificationNo}}\n- Owner: {{nodes.getcontractbycontractnumber.result.data.result[0].owner}}\n- Effective Date: {{nodes.getcontractbycontractnumber.result.data.result[0].effectiveDate}}\n- Expiry Date: {{nodes.getcontractbycontractnumber.result.data.result[0].expiryDate}}\n- Is Perpetual: {{nodes.getcontractbycontractnumber.result.data.result[0].isPerpetual}}\n- Is Auto Renewal: {{nodes.getcontractbycontractnumber.result.data.result[0].isAutoRenew}}\n\nRULES:\n- First check if contract data exists (Contract Number is not null/empty/undefined)\n- If NO DATA: Set hasData=false, result=\"No contract data found\", formattedExpiryDate=\"N/A\"\n- If DATA EXISTS: Set hasData=true and format the data as follows:\n  - Convert dates from ISO format (e.g., \"2026-05-14T10:13:09.394Z\") to the user's preferred date format\n  - If user's preferred date format is \"DD-MM-YYYY\", output \"14-05-2026\"\n  - If user's preferred date format is \"MM/DD/YYYY\", output \"05/14/2026\"\n  - If user's preferred date format is \"YYYY-MM-DD\", output \"2026-05-14\"\n\nOUTPUT FORMAT (when hasData=true):\nI have found the [ContractNumber] in the system<br>Here's a quick summary:<br><strong>Contract Number:</strong> [value]<br><strong>Contract Name:</strong> [value]<br><strong>Contract Type:</strong> [value]<br><strong>Contract Subtype:</strong> [value]<br><strong>Status:</strong> [value]<br><strong>Supplier Name:</strong> [value]<br><strong>Supplier Partner Code:</strong> [value]<br><strong>Owner:</strong> [value]<br><strong>Effective Date:</strong> [formatted date]<br><strong>Expiry Date:</strong> [formatted date]<br><strong>Is Perpetual:</strong> [value]<br><strong>Is Auto Renewal:</strong> [value]<br>Would you like to go ahead with the termination request?"
+                    }
+                ],
+                "structuredOutput": {
+                    "enable": true,
+                    "name": "",
+                    "description": "",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "result": {
+                                "type": "string"
+                            },
+                            "formattedExpiryDate": {
+                                "type": "string",
+                                "description": "The expiry date formatted as DD-MM-YYYY"
+                            },
+                            "hasData": {
+                                "type": "string",
+                                "description": "true if contract data was found and formatted successfully, False if no data or error"
+                            }
+                        },
+                        "required": [
+                            "formattedExpiryDate"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.formattedExpiryDate",
+                    "operation": "set",
+                    "value": "{{nodeOutput.structuredOutput.formattedExpiryDate}}"
+                },
+                {
+                    "fieldName": "flow.formattedContractSummary",
+                    "operation": "set",
+                    "value": "{{nodeOutput.structuredOutput.result}}"
+                },
+                {
+                    "fieldName": "flow.hasData",
+                    "operation": "set",
+                    "value": "{{nodeOutput.structuredOutput.hasData}}"
+                }
+            ],
+            "width": 294,
+            "height": 103,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 947.182714639442,
+                "y": 1080.9698806898743
+            },
+            "dragging": false
+        },
+        {
+            "id": "bvf0028",
+            "type": "variable",
+            "name": "validation_message_updator",
+            "description": "",
+            "position": {
+                "x": -1082.9802735294784,
+                "y": 971.5225313111484
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {},
+            "data": {},
+            "width": 350,
+            "height": 71,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -1082.9802735294784,
+                "y": 971.5225313111484
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.dateValidationMessage",
+                    "operation": "set",
+                    "value": "{{nodes.contract_termination_assistant.toolResults.show_termination_date_picker.DateValidationMessage}}"
+                }
+            ]
+        },
+        {
+            "id": "2mdax1x",
+            "type": "variable",
+            "name": "variable_0",
+            "description": "",
+            "position": {
+                "x": 1755.0883287715562,
+                "y": 247
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {},
+            "data": {},
+            "width": 250,
+            "height": 71,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1755.0883287715562,
+                "y": 243.9606962888811
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
+                }
+            ]
+        },
+        {
+            "id": "up96ges",
+            "type": "output",
+            "name": "output_0",
+            "description": "",
+            "position": {
+                "x": 1683.101912129362,
+                "y": -266.97858005690534
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "outputMapping": {
+                    "messages": {
+                        "type": "string",
+                        "value": "{{thread.messages}}"
+                    },
+                    "selectedAgentID": {
+                        "type": "string",
+                        "value": "{{runtime.workflowMetaData.workflowId}}"
+                    },
+                    "selectedAgentName": {
+                        "type": "string",
+                        "value": "{{runtime.workflowMetaData.agentName}}"
+                    },
+                    "isPvRendered": {
+                        "type": "string",
+                        "value": "{{flow.isPvRendered}}"
+                    },
+                    "agentName": {
+                        "type": "string",
+                        "value": "{{flow.agentName}}"
+                    },
+                    "text": {
+                        "type": "string",
+                        "value": "{{nodes.contract_termination_assistant.text}}"
+                    }
+                }
+            },
+            "data": {},
+            "width": 150,
+            "height": 71,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1684.8641916483002,
+                "y": -266.97858005690534
+            },
+            "dragging": false
+        },
+        {
+            "id": "5yj69do",
+            "type": "tool",
+            "name": "getusercontext",
+            "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get_user_context",
+            "position": {
+                "x": 55.90009570038859,
+                "y": -91.65567452114354
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-getusercontext-39",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "description": "Event to execute DAC policy in server function.",
+                            "type": "string"
+                        },
+                        "data": {
+                            "type": "string",
+                            "description": "Payload used to execute the function."
+                        },
+                        "additionalData": {
+                            "type": "string",
+                            "description": "Any additional data used by the function."
+                        }
+                    },
+                    "required": [
+                        "data"
+                    ],
+                    "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: get_user_context"
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "functionId": "ff219573-fb12-49be-a8e1-be22b31b950e",
+                    "type": "ssf-call",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "event": "\"\"",
+                    "data": "{}",
+                    "additionalData": "{}"
+                }
+            },
+            "data": {},
+            "width": 327,
+            "height": 95,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 55.90009570038859,
+                "y": -91.65567452114354
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.result}}",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "cnru7aq",
+            "type": "tool",
+            "name": "getcontractbysuppliername",
+            "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get_Contract_By_Supplier_Name",
+            "position": {
+                "x": -225.01801466265806,
+                "y": 555.5532333423308
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-GetContractBySupplierName-36",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "description": "Event to execute DAC policy in server function.",
+                            "type": "string"
+                        },
+                        "data": {
+                            "type": "string",
+                            "description": "Payload used to execute the function."
+                        },
+                        "additionalData": {
+                            "type": "string",
+                            "description": "Any additional data used by the function."
+                        }
+                    },
+                    "required": [
+                        "data"
+                    ],
+                    "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get_Contract_By_Supplier_Name"
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "functionId": "221f4e08-7a43-452a-9e50-d15d1eb056dd",
+                    "type": "ssf-call",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "event": "\"\"",
+                    "data": "{{nodes.contract_termination_assistant.toolResults.get_contracts_by_using_supplier_name.data}}",
+                    "additionalData": "{}"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -225.01801466265806,
+                "y": 555.5532333423308
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.result}}",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "6g1jq8y",
+            "type": "tool",
+            "name": "suppliergridv1",
+            "description": "Description:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.",
+            "position": {
+                "x": 746.7266316977111,
+                "y": 672.1164926628628
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-SupplierGridV1-66",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Text message to be rendered before the content of the partial view",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Text message to be rendered after the content of the partial view",
+                            "type": "string"
+                        },
+                        "gridData": {
+                            "description": "Description:\n\n\nNotes:\n",
+                            "type": "string"
+                        },
+                        "supplierGrid_msg": {
+                            "description": "Description:\nUse this override to set data for label. Type of data is html string and overrideid is \"supplierGrid_msg\".\n\nNotes:\nUse this override to set data for label. Type of data is html string and overrideid is \"supplierGrid_msg\".",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis tool is for rendering suppliers in grid in case of multiple suppliers found in our records."
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"62e1e08f-92c0-4016-aa55-706cbbf77a44\",\"Version\":[0,0],\"Type\":\"partialView\",\"Name\":\"SupplierGridV1\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\",\"Instruction\":\"This tool is for rendering suppliers in grid in case of multiple suppliers found in our records.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"gridData\":{\"Type\":\"data\",\"OverrideId\":\"gridData\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"gridData\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"},\"supplierGrid_msg\":{\"Type\":\"data\",\"OverrideId\":\"supplierGrid_msg\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"supplierGrid_msg\",\"Description\":\"Use this override to set data for label. Type of data is html string and overrideid is \\u0022supplierGrid_msg\\u0022.\",\"Instruction\":\"Use this override to set data for label. Type of data is html string and overrideid is \\u0022supplierGrid_msg\\u0022.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"}}}",
+                    "type": "partial-view",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "gridData": "{{nodes.getcontractbysuppliername.result.data.suppliers}}",
+                    "supplierGrid_msg": "I found multiple suppliers in our records with similar names. Please select a supplier from the list below to confirm."
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 746.7266316977111,
+                "y": 672.1164926628628
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "flow.isMultipleSupplier",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "Completed step 1B-multiple and waiting for user interaction",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "oqogawk",
+            "type": "rule",
+            "name": "check_single_or_multiple_suppliers",
+            "description": "",
+            "position": {
+                "x": 206.82635510168666,
+                "y": 526.0532333423308
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "rules": [
+                    {
+                        "ruleId": "r-ndgx6330",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{nodes.getcontractbysuppliername.result.data.suppliers}}",
+                                "operator": "is empty",
+                                "value": ""
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-else",
+                        "enable": true,
+                        "conditions": [],
+                        "logicType": "default"
+                    }
+                ]
+            },
+            "data": {},
+            "width": 350,
+            "height": 170,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 206.82635510168666,
+                "y": 526.0532333423308
+            },
+            "dragging": false
+        },
+        {
+            "id": "0wtegra",
+            "type": "tool",
+            "name": "getcontracts_1",
+            "description": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get_Contracts",
+            "position": {
+                "x": 1168.6516607802046,
+                "y": 477.784677614458
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-GetContracts-18",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "event": {
+                            "description": "Event to execute DAC policy in server function.",
+                            "type": "string"
+                        },
+                        "data": {
+                            "type": "string",
+                            "description": "Payload used to execute the function."
+                        },
+                        "additionalData": {
+                            "type": "string",
+                            "description": "Any additional data used by the function."
+                        }
+                    },
+                    "required": [
+                        "data"
+                    ],
+                    "condition": "Description:\n\n\nReturns:\n- \n\nFriendly Name: Get_Contracts"
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "functionId": "dfd1a652-2c33-48c9-8a13-2cfe7c9a74ee",
+                    "type": "ssf-call",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "event": "\"\"",
+                    "data": "{{nodes.llm_0.structuredOutput}}",
+                    "additionalData": "{}"
+                }
+            },
+            "data": {},
+            "width": 312,
+            "height": 95,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1168.6516607802046,
+                "y": 480.4995351334293
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.result}}",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "vmbx0ib",
+            "type": "tool",
+            "name": "contractgrid1_1",
+            "description": "Description:\nThis view shows available contracts in grid format.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis view shows available contracts in grid format.",
+            "position": {
+                "x": 2503.6779815647396,
+                "y": 404.5275335605926
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-contractgrid-68",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Text message to be rendered before the content of the partial view",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Text message to be rendered after the content of the partial view",
+                            "type": "string"
+                        },
+                        "gridData": {
+                            "description": "Description:\n\n\nNotes:\ngridData is a json object having a single property `gridRows`, and this gridRows contains list of contracts.",
+                            "type": "string"
+                        },
+                        "contract_grid_label": {
+                            "description": "Description:\n\n\nNotes:\n",
+                            "type": "string"
+                        },
+                        "contract_grid_buttons_datamodel": {
+                            "description": "Description:\n\n\nNotes:\n**This data override will be type of array of objects. Where each object referes to a button object. This override help to overrideId - 'contract_grid_buttons_datamodel'. **Always override a valid json object to datamodel.  **It holds below schema -    ``` [ \t{ \t\t\"label\": \"Create New Contract\", \t\t\"value\": \"Create New Contract\" \t}, \t{ \t\t\"label\": \"Amend Selected Contract\", \t\t\"value\": \"Amend Selected Contract\", \t\t\"dataModelForSelection\": [ \t\t\t{ \t\t\t\t\"dataModelId\": \"selectedGridRows\", \t\t\t\t\"dataPath\": \"contract_grid.0.contractNumber\" \t\t\t} \t\t], \t\t\"dataModelForContext\": [ \t\t\t{ \t\t\t\t\"dataModelId\": \"selectedGridRows\", \t\t\t\t\"dataPath\": \"contract_grid.0\" \t\t\t} \t\t] \t} ] ```",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nThis view shows available contracts in grid format.\n\nOutputs:\n- Returns an object containing:\n  - `RenderingId` (string): The unique identifier of the rendered template. Must be used in final response when referencing this template e.g. [partial_view: RenderingId]\n  - `ContentType` (string): Specifies what type of template this is (e.g. `partial_view`).\n  - `Template` (string): A string representing the UI View Template.\n  - `TemplateDescription` (string): A short description of what the template will present to the user.\n\nNotes:\nThis view shows available contracts in grid format."
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"779d507a-cae1-425c-85a5-c6bcea429125\",\"Version\":[0,0],\"Type\":\"partialView\",\"Name\":\"contract_grid\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This view shows available contracts in grid format.\",\"Instruction\":\"This view shows available contracts in grid format.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"gridData\":{\"Type\":\"data\",\"OverrideId\":\"gridData\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"gridData\",\"Description\":\"\",\"Instruction\":\"gridData is a json object having a single property \\u0060gridRows\\u0060, and this gridRows contains list of contracts.\",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"},\"contract_grid_label\":{\"Type\":\"data\",\"OverrideId\":\"contract_grid_label\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"contract_grid_label\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"contract_grid_buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"contract_grid_buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"contract_grid_buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"**This data override will be type of array of objects. Where each object referes to a button object. This override help to overrideId - \\u0027contract_grid_buttons_datamodel\\u0027. **Always override a valid json object to datamodel.  **It holds below schema -    \\u0060\\u0060\\u0060 [ \\t{ \\t\\t\\u0022label\\u0022: \\u0022Create New Contract\\u0022, \\t\\t\\u0022value\\u0022: \\u0022Create New Contract\\u0022 \\t}, \\t{ \\t\\t\\u0022label\\u0022: \\u0022Amend Selected Contract\\u0022, \\t\\t\\u0022value\\u0022: \\u0022Amend Selected Contract\\u0022, \\t\\t\\u0022dataModelForSelection\\u0022: [ \\t\\t\\t{ \\t\\t\\t\\t\\u0022dataModelId\\u0022: \\u0022selectedGridRows\\u0022, \\t\\t\\t\\t\\u0022dataPath\\u0022: \\u0022contract_grid.0.contractNumber\\u0022 \\t\\t\\t} \\t\\t], \\t\\t\\u0022dataModelForContext\\u0022: [ \\t\\t\\t{ \\t\\t\\t\\t\\u0022dataModelId\\u0022: \\u0022selectedGridRows\\u0022, \\t\\t\\t\\t\\u0022dataPath\\u0022: \\u0022contract_grid.0\\u0022 \\t\\t\\t} \\t\\t] \\t} ] \\u0060\\u0060\\u0060\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                    "type": "partial-view",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "gridData": "{{nodes.llm_1.structuredOutput.gridData}}",
+                    "contract_grid_label": "I found <supplier_name> in our records. <br> Here's a quick summary: <br> <strong>Supplier Legal Name:</strong> {{flow.supplierDetails.supplierName}} <br> <strong>Supplier Partner Number:</strong> {{flow.supplierDetails.supplierSourceIdentificationNo}} <br> <strong>Supplier Partner Status:</strong> {{flow.supplierDetails.partnerStatus}} <br> <strong>Supplier Onboarding Status:</strong> {{flow.supplierDetails.onboardingStatus}} <br> The following contracts are associated with {{flow.supplierDetails.supplierSourceIdentificationNo}}. Kindly select the contract you wish to terminate.",
+                    "contract_grid_buttons_datamodel": "[{\"label\":\"Terminate Selected Contract\",\"value\":\"Terminate Selected Contract\",\"dataModelForSelection\":[{\"dataModelId\":\"selectedGridRows\",\"dataPath\":\"contract_grid.0.contractNumber\"}],\"dataModelForContext\":[{\"dataModelId\":\"selectedGridRows\",\"dataPath\":\"contract_grid.0\"}],\"validation\":[{\"validationType\":\"emptyDataModel\",\"validationMessage\":\"Please select contract to continue.\",\"values\":[{\"dataModelId\":\"selectedGridRows\",\"dataPath\":\"contract_grid.0.contractNumber\"}]}]}]"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 2503.6779815647396,
+                "y": 404.5275335605926
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "flow.isSingleContract",
+                    "operation": "set",
+                    "value": false
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "Completed step 1C-supplier-contracts and waiting for user interaction",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "mi1x0ul",
+            "type": "llm",
+            "name": "llm_0",
+            "description": "",
+            "position": {
+                "x": 755.0814795127885,
+                "y": 473.284677614458
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "model": {
+                    "code": "gpt-4.1",
+                    "name": "OpenAI GPT-4.1"
+                },
+                "promptTemplate": [
+                    {
+                        "id": "cefde83f-3401-4363-b143-22acde9641e6",
+                        "role": "system",
+                        "text": "You are a JSON transformer. Output ONLY a single valid JSON object and nothing else.\n\nINPUTS:\nsuppliersGridRows = {{nodes.getcontractbysuppliername.result.suppliers.gridRows}}\nuserMessage = {{nodes.start.interface.inputs.message}}\npartialViewData = {{nodes.start.interface.inputs.partialViewData}}\n\nRULES:\n1) If partialViewData contains a selected supplier JSON (it will include \"sourceIdentificationNo\"), use that selection.\n   - If partialViewData is an array of JSON strings, use the first element.\n2) Else, use suppliersGridRows[0].\n3) Map fields exactly:\n   supplierSourceIdentificationNo = sourceIdentificationNo (string; if number, convert to string)\n   supplierName = legalCompanyName\n   partnerCode = partnerCode\n   partnerStatus = partnerStatus\n   onboardingStatus = onboardingStatus\n   status = [\"Live\"]\n4) Output ONLY the JSON object. No markdown fences.\n\nOUTPUT (exact JSON shape):\n{\n  \"supplierSourceIdentificationNo\": \"<string>\",\n  \"supplierName\": \"<string>\",\n  \"partnerCode\": \"<string>\",\n  \"partnerStatus\": \"<string>\",\n  \"onboardingStatus\": \"<string>\",\n  \"status\": [\"Live\"]\n}"
+                    }
+                ],
+                "structuredOutput": {
+                    "enable": true,
+                    "name": "",
+                    "description": "",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "supplierSourceIdentificationNo": {
+                                "type": "string",
+                                "description": "Unique source identification number of the supplier"
+                            },
+                            "supplierName": {
+                                "type": "string",
+                                "description": "Legal name of the supplier"
+                            },
+                            "partnerCode": {
+                                "type": "string",
+                                "description": "Unique partner code associated with the supplier"
+                            },
+                            "partnerStatus": {
+                                "type": "string",
+                                "description": "Current status of the partner"
+                            },
+                            "onboardingStatus": {
+                                "type": "string",
+                                "description": "Current onboarding status of the supplier"
+                            },
+                            "status": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "enum": [
+                                        "Live"
+                                    ]
+                                },
+                                "description": "Status of the supplier or contract"
+                            }
+                        },
+                        "required": [
+                            "supplierSourceIdentificationNo",
+                            "supplierName",
+                            "partnerCode",
+                            "partnerStatus",
+                            "onboardingStatus",
+                            "status"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.supplierDetails",
+                    "operation": "set",
+                    "value": "{{nodeOutput.structuredOutput}}"
+                }
+            ],
+            "width": 250,
+            "height": 103,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 755.0814795127885,
+                "y": 470.942548938542
+            },
+            "dragging": false
+        },
+        {
+            "id": "ubh1gv6",
+            "type": "llm",
+            "name": "llm_1",
+            "description": "",
+            "position": {
+                "x": 1569.2153415735775,
+                "y": 473.284677614458
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "model": {
+                    "code": "gpt-4.1",
+                    "name": "OpenAI GPT-4.1"
+                },
+                "promptTemplate": [
+                    {
+                        "id": "90da8238-e118-472f-a0d0-d1e03f36f752",
+                        "role": "system",
+                        "text": "You are a JSON transformer.\nOutput ONLY a single valid JSON object and nothing else.\n\nINPUT:\ncontractsList = {{nodes.getcontracts_1.result.text}}\n\nRULES:\n1) If contractsList is a valid array, set gridData.gridRows = contractsList.\n2) If contractsList is empty or null, set gridData.gridRows = [].\n3) Set hasContractsData:\n   - true if gridData.gridRows has at least 1 item\n   - false otherwise\n4) Do NOT add any other keys. No markdown.\n\nOUTPUT JSON SHAPE (exact):\n{\n  \"gridData\": {\n    \"gridRows\": []\n  },\n  \"hasContractsData\": false\n}"
+                    }
+                ],
+                "structuredOutput": {
+                    "enable": true,
+                    "name": "",
+                    "description": "",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "gridData": {
+                                "type": "object",
+                                "properties": {
+                                    "gridRows": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {},
+                                            "required": [],
+                                            "additionalProperties": false
+                                        }
+                                    }
+                                },
+                                "required": [
+                                    "gridRows"
+                                ],
+                                "additionalProperties": false,
+                                "description": "gridData"
+                            },
+                            "hasContractsData": {
+                                "type": "boolean",
+                                "description": "Does the supplier has contracts or not"
+                            }
+                        },
+                        "required": [
+                            "gridData",
+                            "hasContractsData"
+                        ],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "data": {},
+            "width": 250,
+            "height": 103,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1569.2153415735775,
+                "y": 469.9121619985135
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "{{flow.hasContractsData}}",
+                    "operation": "set",
+                    "value": "{{nodeOutput.structuredOutput.hasContractsData}}"
+                }
+            ]
+        },
+        {
+            "id": "eokkss9",
+            "type": "rule",
+            "name": "rule_contract_check",
+            "description": "Checks if contract data was found",
+            "position": {
+                "x": 1173.4177792871512,
+                "y": 818.1311820217828
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "rules": [
+                    {
+                        "ruleId": "r-0h9yftx6",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{flow.hasData}}",
+                                "operator": "equals",
+                                "value": false
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-else",
+                        "enable": true,
+                        "conditions": [],
+                        "logicType": "default"
+                    }
+                ]
+            },
+            "data": {},
+            "width": 350,
+            "height": 170,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1173.4177792871512,
+                "y": 818.1311820217828
+            },
+            "dragging": false
+        },
+        {
+            "id": "dhvboi0",
+            "type": "rule",
+            "name": "rule_0",
+            "description": "",
+            "position": {
+                "x": 1916.5886192467906,
+                "y": 477.784677614458
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "rules": [
+                    {
+                        "ruleId": "r-dk5r21ik",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{flow.hasContractsData}}",
+                                "operator": "equals",
+                                "value": false
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-else",
+                        "enable": true,
+                        "conditions": [],
+                        "logicType": "default"
+                    }
+                ]
+            },
+            "data": {},
+            "width": 271,
+            "height": 170,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1916.5886192467906,
+                "y": 477.92600531744733
+            },
+            "dragging": false
+        },
+        {
+            "id": "ery9wwb",
+            "type": "tool",
+            "name": "prfsentforvalidationsuccesspv0017",
+            "description": "Description:\nShow this PV on success of send for validation.\n\nNotes:\nShow this PV on success of send for validation.",
+            "position": {
+                "x": 1675.923834390333,
+                "y": 1501.4493072931796
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none"
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "mcp-62e995f8-9aed-4aab-9621-45c817019856-prfsentForValidationSuccesspv0017",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Optional Markdown shown immediately before this view. Use to introduce what it shows/why it matters or give brief instructions. Omit if unnecessary. Must be valid Markdown; UI preserves formatting and spacing.",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Optional Markdown shown immediately after this view. Use for next steps, brief context/interpretation, or a transition to the next section/view. Omit if unnecessary. Must be valid Markdown; UI preserves formatting and spacing.",
+                            "type": "string"
+                        },
+                        "sendForValidationOverrides": {
+                            "description": "Description:\nUse agent history and set the value to ovverride 'sendForValidationOverrides' from '${sendForValidationPV}' \n\nNotes:\nUse agent history and set the value to ovverride 'sendForValidationOverrides' from '${sendForValidationPV}' ",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nShow this PV on success of send for validation.\n\nNotes:\nShow this PV on success of send for validation."
+                },
+                "settings": {
+                    "serverId": "62e995f8-9aed-4aab-9621-45c817019856"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"56a8778a-e705-4a1b-acf9-2eafd3029cae\",\"Version\":[0,0],\"Type\":\"partialSection\",\"Name\":\"prf_sentForValidationSuccess_pv-0.0.17\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"Show this PV on success of send for validation.\",\"Instruction\":\"Show this PV on success of send for validation.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"sendForValidationOverrides\":{\"Type\":\"data\",\"OverrideId\":\"sendForValidationOverrides\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"projectrequest\",\"Description\":\"Use agent history and set the value to ovverride \\u0027sendForValidationOverrides\\u0027 from \\u0027${sendForValidationPV}\\u0027 \",\"Instruction\":\"Use agent history and set the value to ovverride \\u0027sendForValidationOverrides\\u0027 from \\u0027${sendForValidationPV}\\u0027 \",\"Value\":null,\"DataType\":\"object\",\"Source\":\"static\"}}}",
+                    "type": "partial-view"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "sendForValidationOverrides": "{{nodeOutput.interface.inputs.partialViewData}}"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 111,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1675.923834390333,
+                "y": 1500.9073219531
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                },
+                {
+                    "fieldName": "thread.contract_termination_assistant_messages",
+                    "operation": "append",
+                    "value": "Flow completed Sent for validation",
+                    "role": "tool"
+                }
+            ]
+        }
+    ],
+    "edges": [
+        {
+            "id": "reactflow__edge-start-rs1m186",
+            "source": "start",
+            "target": "rs1m186",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "start",
+                "targetType": "agent"
+            }
+        },
+        {
+            "id": "rs1m186-handoff-460f2edf-f3f0-4096-b5fe-292f6fccf1f9",
+            "source": "rs1m186",
+            "target": "xgkq21i",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "460f2edf-f3f0-4096-b5fe-292f6fccf1f9",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "rs1m186-handoff-460f5fac-2025-407a-bdc3-1dcfedb3f85f",
+            "source": "rs1m186",
+            "target": "pw0nceb",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "460f5fac-2025-407a-bdc3-1dcfedb3f85f",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "rs1m186-handoff-2bf3dc7c-eb33-4c19-af66-c94bb38ddbf5",
+            "source": "rs1m186",
+            "target": "ogkusds",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "2bf3dc7c-eb33-4c19-af66-c94bb38ddbf5",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-ogkusds-zsav7rk",
+            "source": "ogkusds",
+            "target": "zsav7rk",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-zsav7rkr-71d7d5es-erhf17m",
+            "source": "zsav7rk",
+            "target": "erhf17m",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-71d7d5es",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-zsav7rkr-else-a4p7a78",
+            "source": "zsav7rk",
+            "target": "a4p7a78",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-else",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-a4p7a78-rrr57fw",
+            "source": "a4p7a78",
+            "target": "rrr57fw",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "rs1m186-handoff-4f8ab931-6ac2-456f-9f77-de107a90cf2c",
+            "source": "rs1m186",
+            "target": "t8bed3t",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "4f8ab931-6ac2-456f-9f77-de107a90cf2c",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-qvdpb75-c0p4l30",
+            "source": "qvdpb75",
+            "target": "c0p4l30",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "rs1m186-handoff-ad03e888-95c2-4789-866e-bd05cb114ebc",
+            "source": "rs1m186",
+            "target": "qvdpb75",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "ad03e888-95c2-4789-866e-bd05cb114ebc",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-xgkq21i-ivbrkmb",
+            "source": "xgkq21i",
+            "target": "ivbrkmb",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "llm"
+            }
+        },
+        {
+            "id": "rs1m186-handoff-fc6ed8a6-5167-487d-b436-b1d08f299ba6",
+            "source": "rs1m186",
+            "target": "bvf0028",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "fc6ed8a6-5167-487d-b436-b1d08f299ba6",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "reactflow__edge-bvf0028-erhf17m",
+            "source": "bvf0028",
+            "target": "erhf17m",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "variable",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-pw0nceb-2mdax1x",
+            "source": "pw0nceb",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "reactflow__edge-erhf17m-2mdax1x",
+            "source": "erhf17m",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "reactflow__edge-rrr57fw-2mdax1x",
+            "source": "rrr57fw",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "reactflow__edge-t8bed3t-2mdax1x",
+            "source": "t8bed3t",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "reactflow__edge-c0p4l30-2mdax1x",
+            "source": "c0p4l30",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "reactflow__edge-66rs11l-2mdax1x",
+            "source": "66rs11l",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            },
+            "selected": false
+        },
+        {
+            "id": "reactflow__edge-2mdax1x-up96ges",
+            "source": "2mdax1x",
+            "target": "up96ges",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "variable",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "reactflow__edge-rs1m186-up96ges",
+            "source": "rs1m186",
+            "target": "up96ges",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "agent",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "reactflow__edge-5yj69do-rs1m186",
+            "source": "5yj69do",
+            "target": "rs1m186",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "agent"
+            }
+        },
+        {
+            "id": "rs1m186-handoff-ef9acc81-08ca-4b98-9e80-c25b1853cf40",
+            "source": "rs1m186",
+            "target": "5yj69do",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "ef9acc81-08ca-4b98-9e80-c25b1853cf40",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-cnru7aq-oqogawk",
+            "source": "cnru7aq",
+            "target": "oqogawk",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "rule"
+            },
+            "selected": false
+        },
+        {
+            "id": "reactflow__edge-oqogawkr-else-6g1jq8y",
+            "source": "oqogawk",
+            "target": "6g1jq8y",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-else",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "tool"
+            },
+            "selected": false
+        },
+        {
+            "id": "reactflow__edge-mi1x0ul-0wtegra",
+            "source": "mi1x0ul",
+            "target": "0wtegra",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "llm",
+                "targetType": "tool"
+            },
+            "selected": false
+        },
+        {
+            "id": "reactflow__edge-0wtegra-ubh1gv6",
+            "source": "0wtegra",
+            "target": "ubh1gv6",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "llm"
+            },
+            "selected": false
+        },
+        {
+            "id": "reactflow__edge-vmbx0ib-2mdax1x",
+            "source": "vmbx0ib",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            },
+            "selected": false
+        },
+        {
+            "id": "rs1m186-handoff-4a307cef-42ba-4e29-bc01-a66405099374",
+            "source": "rs1m186",
+            "target": "cnru7aq",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "4a307cef-42ba-4e29-bc01-a66405099374",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            },
+            "selected": false
+        },
+        {
+            "id": "rs1m186-handoff-7a970224-4da2-46f9-ba68-25c3343ba77b",
+            "source": "rs1m186",
+            "target": "mi1x0ul",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "7a970224-4da2-46f9-ba68-25c3343ba77b",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "llm"
+            },
+            "selected": false
+        },
+        {
+            "id": "reactflow__edge-ivbrkmb-eokkss9",
+            "source": "ivbrkmb",
+            "target": "eokkss9",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "llm",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-eokkss9r-else-66rs11l",
+            "source": "eokkss9",
+            "target": "66rs11l",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-else",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-eokkss9r-0h9yftx6-rs1m186",
+            "source": "eokkss9",
+            "target": "rs1m186",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-0h9yftx6",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "agent"
+            }
+        },
+        {
+            "id": "reactflow__edge-6g1jq8y-2mdax1x",
+            "source": "6g1jq8y",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "reactflow__edge-oqogawkr-ndgx6330-mi1x0ul",
+            "source": "oqogawk",
+            "target": "mi1x0ul",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-ndgx6330",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "llm"
+            }
+        },
+        {
+            "id": "reactflow__edge-ubh1gv6-dhvboi0",
+            "source": "ubh1gv6",
+            "target": "dhvboi0",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "llm",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-dhvboi0r-else-vmbx0ib",
+            "source": "dhvboi0",
+            "target": "vmbx0ib",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-else",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-dhvboi0r-dk5r21ik-rs1m186",
+            "source": "dhvboi0",
+            "target": "rs1m186",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-dk5r21ik",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "agent"
+            }
+        },
+        {
+            "id": "reactflow__edge-ery9wwb-2mdax1x",
+            "source": "ery9wwb",
+            "target": "2mdax1x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "rs1m186-handoff-f4304b15-1b27-49b5-9e47-1ff7e7177561",
+            "source": "rs1m186",
+            "target": "ery9wwb",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "f4304b15-1b27-49b5-9e47-1ff7e7177561",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        }
+    ],
+    "variables": {
+        "flow": [
+            {
+                "id": "var-uw58o80lt",
+                "name": "isMultipleSupplier",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-n38gnwe4b",
+                "name": "isSingleContract",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-hqn86kv4z",
+                "name": "dateValidationMessage",
+                "type": "string",
+                "default": "Got it! Now, let's capture the <strong>new contract termination date.</strong>",
+                "required": false
+            },
+            {
+                "id": "var-0112hys9v",
+                "name": "formattedContractSummary",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-fhv10c33w",
+                "name": "formattedExpiryDate",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-2l10g9deh",
+                "name": "userDateFormat",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-9fq7os0k8",
+                "name": "isPvRendered",
+                "type": "boolean",
+                "default": false,
+                "required": false
+            },
+            {
+                "id": "var-pvoqqsrox",
+                "name": "agentName",
+                "type": "string",
+                "default": "contract_termination_assistant",
+                "required": false
+            },
+            {
+                "id": "var-gy5f4g52b",
+                "name": "supplierDetails",
+                "type": "object",
+                "default": {},
+                "required": false
+            },
+            {
+                "id": "var-jrhyc2khy",
+                "name": "hasData",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-635zxwfk2",
+                "name": "datevalidated",
+                "type": "boolean",
+                "default": false,
+                "required": false
+            },
+            {
+                "id": "var-yltbkewmr",
+                "name": "typeSelected",
+                "type": "boolean",
+                "default": false,
+                "required": false
+            },
+            {
+                "id": "var-hs4d2cztp",
+                "name": "hasContractsData",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-bbqyaidm5",
+                "name": "pvresponse",
+                "type": "string",
+                "default": "",
+                "required": false
+            }
+        ],
+        "system": []
+    },
+    "interface": {
+        "inputs": {
+            "query": {
+                "type": "string",
+                "description": "User query to process",
+                "required": true
+            }
+        },
+        "outputs": {
+            "response": {
+                "type": "string",
+                "description": "Final response to the user"
+            }
+        }
+    },
+    "security": {
+        "activities": [
+            {
+                "refId": "11300009",
+                "code": "11300009",
+                "name": "Projects - Create project request"
+            },
+            {
+                "refId": "1032000004",
+                "code": "1032000004",
+                "name": "GEP Qi - Create Request"
+            }
+        ]
+    },
+    "publishChannels": [
+        {
+            "refId": "api",
+            "code": "api",
+            "name": "API",
+            "description": "Expose the agent as a REST API for system and app integrations"
+        },
+        {
+            "refId": "qi-ui",
+            "code": "qi-ui",
+            "name": "Qi UI",
+            "description": "Make your agent available in GEP’s Qi interface"
+        }
+    ],
+    "skills": [],
+    "createdBy": "anjan.bandi@gep.com",
+    "createdOn": "2026-02-05T08:05:55.381Z",
+    "updatedBy": "anjan.bandi@gep.com",
+    "updatedOn": "2026-02-05T08:05:55.381Z",
+    "environment": "DEV",
+    "appId": "98bed795-a280-4672-86ad-d13fa7aa83a9",
+    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+    "version": "v1770346099216925400"
+}

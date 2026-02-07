@@ -1,0 +1,41 @@
+
+========== V3 Workflow Graph Structure ==========
+  File: D:\Agents\Uranus\Uranus-server\src\core\jsons\agentic_workflow_simple.json
+  Workflow ID: 8a51dd29-efa3-4942-a957-e5d009f525cc
+  Name: supplier-offboarding-with-skipping
+----------------------------------------
+  Nodes:
+    - projectrequesttool
+    - prfcreaterequestformpv
+    - llm_0
+    - rule_0
+    - labelandbuttons
+    - getsuppliers
+    - supervisor
+    - labelandbuttons1
+    - labelandbuttons4
+    - getglobalcode
+    - labelandbuttons2
+    - suppliergridv1
+  Edges:
+    projectrequesttool -> prfcreaterequestformpv
+    prfcreaterequestformpv -> supervisor
+    llm_0 -> 
+    
+    start -> supervisor
+    labelandbuttons -> supervisor
+    getsuppliers -> llm_0
+    supervisor -> projectrequesttool
+    supervisor -> labelandbuttons
+    supervisor -> getsuppliers
+    supervisor -> labelandbuttons1
+    supervisor -> getglobalcode
+    labelandbuttons1 -> supervisor
+    getglobalcode -> labelandbuttons2
+    labelandbuttons2 -> supervisor
+    rule_0 -> end
+  Conditional edges (from workflow):
+    rule_0 --[r-z9r4m8av]--> suppliergridv1
+    rule_0 --[r-bcf0t4o5]--> labelandbuttons4
+    rule_0 --[r-else]--> supervisor
+==========================================

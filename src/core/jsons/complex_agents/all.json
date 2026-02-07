@@ -1,0 +1,1690 @@
+{
+    "agenticWorkflowId": "d57ecc66-69ef-4a5a-b178-b29bcb57470a",
+    "bpc": "20210511",
+    "name": "intake-orchestration-assistant",
+    "displayName": "Intake Orchestration Assistant",
+    "description": "latest v12",
+    "isDisabled": false,
+    "editAs": "canvas",
+    "enableForAutoInvoke": true,
+    "fromModuleVersion": "v1770330968624601900",
+    "lastModifiedVersion": "v1770346099216925400",
+    "rebasedFromVersion": null,
+    "nodes": [
+        {
+            "id": "start",
+            "type": "start",
+            "name": "start",
+            "description": "Starting point of the workflow",
+            "position": {
+                "x": -649.0681013142895,
+                "y": 47.93901573188731
+            },
+            "deletable": false,
+            "selected": false,
+            "dragging": false,
+            "data": {},
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "label": "start",
+                "nodeType": "start"
+            },
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.selectedAgentId",
+                    "operation": "set",
+                    "value": "{{nodeOutput.interface.inputs.lastSelectedAgentId}}",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "lastSelectedAgentId",
+                                "operator": "is not empty",
+                                "value": ""
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": false
+                },
+                {
+                    "fieldName": "flow.partialViewData",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.partialViewData}}"
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.message}}",
+                    "role": "user"
+                },
+                {
+                    "fieldName": "system.userQuery",
+                    "operation": "set",
+                    "value": "{{nodeOutput.interface.inputs.message}}"
+                },
+                {
+                    "fieldName": "system.attachments",
+                    "operation": "extend",
+                    "value": "{{nodeOutput.interface.inputs.attachments}}"
+                },
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.interface.inputs.message}}"
+                }
+            ],
+            "width": 250,
+            "height": 96,
+            "positionAbsolute": {
+                "x": -649.0681013142895,
+                "y": 44.84756096422383
+            }
+        },
+        {
+            "id": "output",
+            "type": "output",
+            "name": "output",
+            "description": "Final output of the workflow",
+            "position": {
+                "x": 1705.0097404746086,
+                "y": 47.93901573188731
+            },
+            "deletable": true,
+            "selected": false,
+            "dragging": false,
+            "data": {},
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "outputMapping": {
+                    "messages": {
+                        "type": "string",
+                        "value": "{{thread.messages}}"
+                    },
+                    "selectedAgentID": {
+                        "type": "string",
+                        "value": "{{runtime.workflowMetaData.workflowId}}"
+                    },
+                    "selectedAgentName": {
+                        "type": "string",
+                        "value": "{{runtime.workflowMetaData.agentName}}"
+                    }
+                }
+            },
+            "width": 150,
+            "height": 96,
+            "positionAbsolute": {
+                "x": 1705.0097404746086,
+                "y": 47.93901573188731
+            }
+        },
+        {
+            "id": "24gme24",
+            "type": "workflow",
+            "name": "contract_amendment_assistant",
+            "description": "",
+            "position": {
+                "x": 343.4834048437468,
+                "y": 146.67371284213453
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "inputs": {
+                    "message": "{{system.userQuery}}",
+                    "prevContextHistory": "{{nodes.intake_orchestration.toolResults.contract_amendment_agent.message}}",
+                    "partialViewData": "{{flow.partialViewData}}"
+                },
+                "agenticWorkflowIdMode": "static",
+                "agenticWorkflowId": "1f82c69b-37e6-48b4-a4c4-62d22b048987",
+                "fileName":"contract_amendment_assistant.json",
+                "agentInfo": {
+                    "id": "1f82c69b-37e6-48b4-a4c4-62d22b048987",
+                    "name": "contract_amendment_assistant_with_tool_nodes",
+                    "description": "Contract_Amendment_assistant_With_Tool_Nodes"
+                },
+                "version": ""
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "PV Rendered Successfully",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": true
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.text}}",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": false
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "flow.currentAgentName",
+                    "operation": "set",
+                    "value": "{{nodeOutput.agentName}}"
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "extend",
+                    "value": "{{nodeOutput.messages}}"
+                },
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": "{{nodeOutput.isPvRendered}}"
+                }
+            ],
+            "width": 350,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 343.5300541375376,
+                "y": 146.67371284213453
+            },
+            "dragging": false
+        },
+        {
+            "id": "5oh8s44",
+            "type": "agent",
+            "name": "intake_orchestration",
+            "description": "",
+            "position": {
+                "x": 343.4834048437468,
+                "y": -335.1566720660461
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "agentStrategy": "react",
+                "model": {
+                    "code": "gpt-4.1",
+                    "name": "OpenAI GPT-4.1",
+                    "temperature": 0.1
+                },
+                "promptTemplate": [
+                    {
+                        "id": "ab08eb26-f081-4d0a-8f7c-9e3907da9ea1",
+                        "role": "system",
+                        "text": "You are a helpful AI assistant with access to tools. Use the available tools to help answer questions and complete tasks.\n\nDeveloper: # Agent Selection Rules\n\nBegin with a concise checklist (3–7 bullets) of conceptual steps you will take—avoid implementation details. After each decision point or agent selection, validate the choice in 1–2 sentences to ensure alignment with user intent. If the intent is unclear, clarify with the user and make minimal self-corrections if needed.\n\nSet `reasoning_effort = medium` for the multi-step, decision-based nature of the task.\nProceed autonomously until the request is fully resolved, but prefer confirming with the user if required inputs are ambiguous or missing—do not guess. After each action or agent choice, briefly validate if it met the goal before proceeding or making a minimal correction.\n\n### Agent Tool Selection Guidelines\n\n1. **Contract Update (Ambiguous Cases):**\n  \n   - If the user explicitly mentions Amend, Extend, or Terminate Contract:\n              - Do NOT invoke Update Contract Agent\n              - Route only to the corresponding specific contract agent\n              - Missing supplier or contract details must be collected by that agent\n\n   - Invoke Update Contract Agent ONLY when:\n           - The user intent involves changing or updating a contract\n           - AND the intent is not explicitly Amend, Extend, or Terminate\n\n2. **Contract Amendments:**\n   - User wants to amend/modify/change contract terms → **contract_amendment_assistant (Contract Amendment Assistant)**\n\n3. **Contract Extensions:**\n   - User wants to extend/renew contract duration → **contract_externsion_assistant (Contract Extension Assistant)**\n\n4. **Contract Termination:**\n   - User wants to terminate/cancel/close/end a contract → **contract_termination_assistant (Contract Termination Assistant)**\n\n5. **Supplier Offboarding:**\n   - User wants to offboard/remove/deactivate/disqualify supplier/vendor → **supplier_offboarding_assistant (Supplier Offboarding Assistant)**\n   - Keywords: offboard, remove, deactivate, disqualify, stop working with, end relationship\n   - Meaning: supplier relationship is being ended/removed\n\n6. **Supplier Amendments:**\n   - User wants to amend/update supplier details/terms/info (but not offboard) → **supplier_profile_update_assistant (Supplier Amendment Assistant)**\n   - Keywords: update, amend, change, edit, modify, correct, revise, adjust, renew\n   - Meaning: supplier remains active—only details change (address, contacts, banking info, etc.)\n\n**IMPORTANT:** If intent is to block/unblock a supplier, upload a document to supplier, update payment terms, update withholding tax, BNKT update, extend company code, update supplier, block/unblock/freeze/disable a supplier account, or similar—ALWAYS handle via **supplier_profile_update_assistant (Supplier Amendment Assistant)**.\n\n---\n\n### Agent Tool Selection Examples\n\n| User Statement                                                                                                     | Selected Tool                  |\n|-------------------------------------------------------------------------------------------------------------------|----------------------------------|\n| \"I want to extend contract with Amazon\" or \"I need to change the end date of the contract.\"                     | contract_externsion_assistant     |\n| \"Amend contract C-123\" or \"Amend contract for PC-XXXX\"                                                          | contract_amendment_assistant     |\n| \"I want to update supplier profile\" or \"update supplier PC-XXXX\"                                                | supplier_profile_update_assistant (Supplier Amendment Assistant)     |\n| \"I want to block/unblock supplier\", \"upload a document to supplier\", \"update payment terms/withholding tax\"    | supplier_profile_update_assistant (Supplier Amendment Assistant)      |\n| \"Extend company code\", \"Block/Unblock/Freeze/Temporarily disable a supplier/account/profile\"                     | supplier_profile_update_assistant (Supplier Amendment Assistant)      |\n\n---\n\nAfter receiving a tool response, always evaluate:\n\n1. Does the tool response indicate:\n   - The user intent is different from the tool’s responsibility?\n   - Another operation is explicitly named (e.g., offboarding, extension, termination)?\n\n2. If YES:\n   a. Identify the correct tool from the available tool list.\n   b. If the correct tool exists:\n      - Switch to that tool\n      - Call it with the updated intent and extracted entities\n   c. If no suitable tool exists:\n      - Respond to the user explaining the limitation\n\n3. If NO:\n   - Continue with the current tool flow.\n\n---\n### General Instructions\n\n- Work autonomously until the request is resolved. If inputs are ambiguous/missing (e.g., unclear IDs), confirm with the user instead of guessing.\n- If unsure of agent, continue with previous agent and state reasoning briefly.\n- Load the UI view from the agent—do not alter agent responses.\n- Prefer staying with the same agent unless user requests another.\n- If user query is 'Amend Selected Contract: <contract_number>' and recent conversation included a contract list with 'Create New Contract' & 'Amend Selected Contract', invoke **Contract Amendment Assistant**.\n- When in doubt about which agent, use previous step’s agent.\n- If most recent user message directly responds to the preceding agent message (e.g., “yes” to “Do you want to auto-renew?”), continue with the same agent, regardless of explicit contract or supplier mention.\n   - Example: If agent asks about auto-renewal and user replies affirmatively, keep Contract Extension Assistant active.\n- If the user says, “I want to amend supplier <PC-xxxx>” choose Supplier Amendment Assistant; “amend contract for PC-xxxx” chooses Contract Amendment Assistant.\n- If uncertain whether the identifier is a supplier code or contract number, clarify with the user.\n   - Typically: contract numbers = 'CDR-XXXX'; supplier codes = 'PC-XXXX'.\n- If asked to onboard a supplier or unsupported intent, state that this intent is not supported.\n- Requests to block/freeze/disable/temporarily restrict a supplier must use Supplier Amendment Assistant (offboarding is only for permanent removal).\n- From **Update Contract Partial View Data**, transitions allowed to Contract Amendment Assistant, Contract Extension Assistant, or Contract Termination Assistant.\n- Do not output checklists or validation steps; reply in a natural conversational style. And Output the assistant message as it is if its makes sense. Do not call same tool again\n- If you are not sure whether user wants to amend supplier profile or amend/ extend/ terminate contract with the mentioned supplier then always confirm from user before proceeding with any agent.\n"
+                    }
+                ],
+                "tools": [
+                    {
+                        "_id": "5cf7be39-ec88-4e2e-beb6-e25c9269933e",
+                        "name": "update_contract_agent",
+                        "description": "Always override label_datamodel with a question that is based on the user's original intent.\nIf the user mentions a supplier, contract number, or entity, include it in the question.\nWhen the user mentions \"amend\" and it is unclear whether they want to amend a supplier or a contract (e.g., \"I want to amend Microsoft\", \"I want to amend\", \"I want to amend supplier \", or \"I want to amend supplier Microsoft contract\"):\n\nOverride label_datamodel:\nIf entity/supplier mentioned: \"Please select the type of amendment you want to perform for <entity>:\"\nIf no entity: \"Please select the type of amendment you want to perform:\"\nOverride buttons_datamodel with:\njson\n[\n  {\n    \"label\": \"Supplier Amendment\",\n    \"value\": \"<user_Initial_Intent> using Supplier Amendment Assistant\"\n  },\n  {\n    \"label\": \"Contract Amendment\",\n    \"value\": \"<user_Initial_Intent> using Contract Amendment Assistant\"\n  }\n]\n------------\nFor other contract update intents:\nOverride label_datamodel:\nIf entity mentioned: \"Please select the type of update you want to perform for <entity>:\"\nIf no entity: \"Please select the type of update you want to perform.\"\nOverride buttons_datamodel with:\njson\n[\n  {\n    \"label\": \"Amend Contract\",\n    \"value\": \"<user_Initial_Intent> using Amend Contract Assistant\"\n  },\n  {\n    \"label\": \"Extend Contract\",\n    \"value\": \"<user_Initial_Intent> using Extend Contract Assistant\"\n  },\n  {\n    \"label\": \"Terminate Contract\",\n    \"value\": \"<user_Initial_Intent> using Terminate Contract Assistant\"\n  }\n]",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "label_datamodel": {
+                                        "type": "string"
+                                    },
+                                    "buttons_datamodel": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "label_datamodel",
+                                    "buttons_datamodel"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "wle0usp"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "90a059e1-f6c9-4c5b-81a4-3dbac051eac4",
+                        "name": "supplier_profile_update_assistant",
+                        "description": "\t\t- invoke this tool when user is asking for any query related to supplier profile update or amendment assistant\n **Supplier Amendments & profile update:**\n   - User wants to amend/update supplier details/terms/info (but not offboard) → **Supplier Amendment Assistant**\n   - Keywords: update, amend, change, edit, modify, correct, revise, adjust, renew\n   - Meaning: supplier remains active—only details change (address, contacts, banking info, etc.)",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "message": {
+                                        "type": "string",
+                                        "description": "Summarize this agent context summary with all the important part and concise it between the agent output and user input. like user Query: <user-input> & Assistant:<agent-ouput> like natural conversation flow."
+                                    }
+                                },
+                                "required": [
+                                    "message"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "o6pvvaz"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "06171a41-c597-4ae5-8b88-fdab1cff9ff3",
+                        "name": "supplier_offboarding_assistant",
+                        "description": "   - invoke this tool node when user is asking for any query realated to supplier offboarding assistant\n**Supplier Offboarding:**\n   - User wants to offboard/remove/deactivate/disqualify supplier/vendor → **Supplier Offboarding Assistant**\n   - Keywords: offboard, remove, deactivate, disqualify, stop working with, end relationship\n   - Meaning: supplier relationship is being ended/removed\n   ",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "message": {
+                                        "type": "string",
+                                        "description": "Summarize this agent context summary with all the important part and concise it between the agent output and user input. like user Query: <user-input> & Assistant:<agent-ouput> like natural conversation flow."
+                                    }
+                                },
+                                "required": [
+                                    "message"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "65e0exf"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "9e7fe1bb-d4d7-402d-b4cc-ca06d52e4b06",
+                        "name": "contract_extension_assistant",
+                        "description": "- invoke this tool node when user is asking for any query related to contract extension assistant",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "message": {
+                                        "type": "string",
+                                        "description": "Summarize this agent context summary with all the important part and concise it between the agent output and user input. like user Query: <user-input> & Assistant:<agent-ouput> like natural conversation flow."
+                                    }
+                                },
+                                "required": [
+                                    "message"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "3tzmutd"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "5bd0bcf8-92c2-4f70-8070-4ce7690b6416",
+                        "name": "contract_termination_assistant",
+                        "description": "- invoke this tool when user is asking for any query related to contract termination assistant",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "message": {
+                                        "type": "string",
+                                        "description": "Summarize this agent context summary with all the important part and concise it between the agent output and user input. like user Query: <user-input> & Assistant:<agent-ouput> like natural conversation flow."
+                                    }
+                                },
+                                "required": [
+                                    "message"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "zs16xel"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "_id": "00529e73-8a09-4732-8557-6c9d49a4e8ba",
+                        "name": "contract_amendment_agent",
+                        "description": "- invoke this tool when user is asking for any query related to contract amendant assistant",
+                        "type": "tool",
+                        "config": {
+                            "enabled": true,
+                            "toolId": "tool-handoff",
+                            "type": "handoff",
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "message": {
+                                        "type": "string",
+                                        "description": "Summarize this agent context summary with all the important part and concise it between the agent output and user input. like user Query: <user-input> & Assistant:<agent-ouput> like natural conversation flow."
+                                    }
+                                },
+                                "required": [
+                                    "message"
+                                ],
+                                "additionalProperties": false
+                            },
+                            "settings": {
+                                "nodeId": "24gme24"
+                            },
+                            "returnDirect": false,
+                            "parameters": {}
+                        }
+                    }
+                ],
+                "resources": [],
+                "maxIterations": 5,
+                "includeThoughts": true,
+                "streamResponse": true,
+                "structuredOutput": {
+                    "enable": false,
+                    "name": "",
+                    "description": "",
+                    "schema": {
+                        "type": "object",
+                        "properties": {},
+                        "required": [],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.text}}",
+                    "role": "assistant"
+                }
+            ],
+            "width": 350,
+            "height": 214,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 343.4834048437468,
+                "y": -335.1566720660461
+            },
+            "dragging": false
+        },
+        {
+            "id": "zs16xel",
+            "type": "workflow",
+            "name": "contract_termination_assistant",
+            "description": "",
+            "position": {
+                "x": 343.4834048437468,
+                "y": 234.92012405408218
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "inputs": {
+                    "message": "{{system.userQuery}}",
+                    "partialViewData": "{{flow.partialViewData}}",
+                    "prevContextHistory": "{{nodes.intake_orchestration.toolResults.contract_amendment_agent.message}}"
+                },
+                "agenticWorkflowIdMode": "static",
+                "agenticWorkflowId": "aadc1d6c-056b-4e47-834e-bc71837257d4",
+                "fileName":"contract_termination_assistant.json",
+                "agentInfo": {
+                    "id": "aadc1d6c-056b-4e47-834e-bc71837257d4",
+                    "name": "contract-termination-assistant",
+                    "description": "lastest agent v7"
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "PV Rendered Successfully",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": true
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.text}}",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": false
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "flow.currentAgentName",
+                    "operation": "set",
+                    "value": "{{nodeOutput.agentName}}"
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "extend",
+                    "value": "{{nodeOutput.messages}}"
+                },
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": "{{nodeOutput.isPvRendered}}"
+                }
+            ],
+            "width": 350,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 342.0548334151754,
+                "y": 234.92012405408218
+            },
+            "dragging": false
+        },
+        {
+            "id": "3tzmutd",
+            "type": "workflow",
+            "name": "contract_externsion_assistant",
+            "description": "",
+            "position": {
+                "x": 340.3919500760833,
+                "y": 323.0052949297643
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "inputs": {
+                    "message": "{{system.userQuery}}",
+                    "partialViewData": "{{flow.partialViewData}}",
+                    "prevContextHistory": "{{nodes.intake_orchestration.toolResults.contract_extension_assistant.message}}"
+                },
+                "agenticWorkflowIdMode": "static",
+                "agenticWorkflowId": "794ae640-2e7f-4730-9aed-15ba96241e29",
+                "fileName": "contract_externsion_assistant.json",
+                "agentInfo": {
+                    "id": "794ae640-2e7f-4730-9aed-15ba96241e29",
+                    "name": "contract-extension-assistant",
+                    "description": "Latest"
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "PV Rendered Successfully",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": true
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.text}}",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": false
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "flow.currentAgentName",
+                    "operation": "set",
+                    "value": "{{nodeOutput.agentName}}"
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "extend",
+                    "value": "{{nodeOutput.messages}}"
+                },
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": "{{nodeOutput.isPvRendered}}"
+                }
+            ],
+            "width": 350,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 340.3919500760833,
+                "y": 323.0052949297643
+            },
+            "dragging": false
+        },
+        {
+            "id": "note_pkfeh8h",
+            "type": "note",
+            "name": "note_0",
+            "description": "Canvas note",
+            "position": {
+                "x": -542.829692896202,
+                "y": -498.7202361646035
+            },
+            "deletable": true,
+            "style": {
+                "minWidth": 300,
+                "minHeight": 200
+            },
+            "data": {
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "children": [
+                            {
+                                "text": ""
+                            }
+                        ]
+                    }
+                ],
+                "color": "Yellow"
+            },
+            "properties": {},
+            "config": {},
+            "width": 300,
+            "height": 200,
+            "selected": false,
+            "positionAbsolute": {
+                "x": -542.829692896202,
+                "y": -498.7202361646035
+            },
+            "dragging": false
+        },
+        {
+            "id": "2xvbmnn",
+            "type": "rule",
+            "name": "agent_lock",
+            "description": "",
+            "position": {
+                "x": -281.3401709326207,
+                "y": -79.06098426811269
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "rules": [
+                    {
+                        "ruleId": "r-vgwv3anx",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{flow.currentAgentName}}",
+                                "operator": "equals",
+                                "value": "contract_amendment_assistant"
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-k9uuyztd",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{flow.currentAgentName}}",
+                                "operator": "equals",
+                                "value": "contract_termination_assistant"
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-nmiq382g",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{flow.currentAgentName}}",
+                                "operator": "equals",
+                                "value": "contract_externsion_assistant"
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-mues9coz",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{flow.currentAgentName}}",
+                                "operator": "equals",
+                                "value": "supplier_offboarding_assistant"
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-zdzeen8e",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{flow.currentAgentName}}",
+                                "operator": "equals",
+                                "value": "supplier_profile_update_assistant"
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-else",
+                        "enable": true,
+                        "conditions": [],
+                        "logicType": "default"
+                    }
+                ]
+            },
+            "data": {},
+            "width": 335,
+            "height": 350,
+            "selected": false,
+            "dragging": false,
+            "positionAbsolute": {
+                "x": -281.3401709326207,
+                "y": -79.06098426811269
+            }
+        },
+        {
+            "id": "65e0exf",
+            "type": "workflow",
+            "name": "supplier_offboarding_assistant",
+            "description": "",
+            "position": {
+                "x": 343.4834048437468,
+                "y": 411.1535648760449
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "inputs": {
+                    "message": "{{system.userQuery}}",
+                    "partialViewData": "{{flow.partialViewData}}",
+                    "prevContextHistory": "{{nodes.intake_orchestration.toolResults.supplier_offboarding_assistant.message}}"
+                },
+                "agenticWorkflowIdMode": "static",
+                "agenticWorkflowId": "b462bfe0-0264-4150-91a0-0b9f5228fcd9",
+                "fileName":"supplier_offboarding_assistant.json",
+                "agentInfo": {
+                    "id": "b462bfe0-0264-4150-91a0-0b9f5228fcd9",
+                    "name": "supplier-offboarding-assistant",
+                    "description": "Latest v4"
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "PV Rendered Successfully",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": true
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.text}}",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": false
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "flow.currentAgentName",
+                    "operation": "set",
+                    "value": "{{nodeOutput.agentName}}"
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "extend",
+                    "value": "{{nodeOutput.messages}}"
+                },
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": "{{nodeOutput.isPvRendered}}"
+                }
+            ],
+            "width": 350,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 341.9376774599151,
+                "y": 411.1535648760449
+            },
+            "dragging": false
+        },
+        {
+            "id": "o6pvvaz",
+            "type": "workflow",
+            "name": "supplier_profile_update_assistant",
+            "description": "",
+            "position": {
+                "x": 343.4834048437468,
+                "y": 495.7033414156249
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "inputs": {
+                    "message": "{{system.userQuery}}",
+                    "prevContextHistory": "{{nodes.intake_orchestration.toolResults.supplier_profile_update_assistant.message}}",
+                    "partialViewData": "{{flow.partialViewData}}"
+                },
+                "agenticWorkflowIdMode": "static",
+                "agenticWorkflowId": "15217d7e-7839-4496-8998-f6c1a6035a7f",
+                "fileName":"supplier_profile_update_assistant.json",
+                "agentInfo": {
+                    "id": "15217d7e-7839-4496-8998-f6c1a6035a7f",
+                    "name": "supplier-profile-update-assistant",
+                    "description": "Latest"
+                }
+            },
+            "data": {},
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "PV Rendered Successfully",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": true
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "{{nodeOutput.text}}",
+                    "role": "tool",
+                    "rules": {
+                        "conditions": [
+                            {
+                                "field": "{{nodeOutput.isPvRendered}}",
+                                "operator": "equals",
+                                "value": false
+                            }
+                        ],
+                        "logicType": "AND"
+                    }
+                },
+                {
+                    "fieldName": "flow.currentAgentName",
+                    "operation": "set",
+                    "value": "{{nodeOutput.agentName}}"
+                },
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "extend",
+                    "value": "{{nodeOutput.messages}}"
+                },
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": "{{nodeOutput.isPvRendered}}"
+                }
+            ],
+            "width": 350,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 343.4834048437468,
+                "y": 495.7033414156249
+            },
+            "dragging": false
+        },
+        {
+            "id": "0zypxms",
+            "type": "rule",
+            "name": "pv_render_eval",
+            "description": "",
+            "position": {
+                "x": 832.8804623801427,
+                "y": 274.0052949297643
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "rules": [
+                    {
+                        "ruleId": "r-zd1ihk4s",
+                        "enable": true,
+                        "conditions": [
+                            {
+                                "field": "{{flow.isPvRendered}}",
+                                "operator": "equals",
+                                "value": true
+                            }
+                        ],
+                        "logicType": "AND"
+                    },
+                    {
+                        "ruleId": "r-else",
+                        "enable": true,
+                        "conditions": [],
+                        "logicType": "default"
+                    }
+                ]
+            },
+            "data": {},
+            "width": 350,
+            "height": 170,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 832.8804623801427,
+                "y": 277.09674969742775
+            },
+            "dragging": false
+        },
+        {
+            "id": "wle0usp",
+            "type": "tool",
+            "name": "ambigous_pv",
+            "description": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options.",
+            "position": {
+                "x": 343.4834048437468,
+                "y": -85.28144801454044
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {
+                "enabled": true,
+                "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913-labelandbuttons1011-71",
+                "type": "mcp",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "preText": {
+                            "description": "Optional Markdown shown immediately before this view. Use to introduce what it shows/why it matters or give brief instructions. Omit if unnecessary. Must be valid Markdown; UI preserves formatting and spacing.",
+                            "type": "string"
+                        },
+                        "postText": {
+                            "description": "Optional Markdown shown immediately after this view. Use for next steps, brief context/interpretation, or a transition to the next section/view. Omit if unnecessary. Must be valid Markdown; UI preserves formatting and spacing.",
+                            "type": "string"
+                        },
+                        "label_datamodel": {
+                            "description": "Description:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.\n\nNotes:\n**If data is not a valid html string then convert the value to string.  **Use `label_datamodel` override to pass data to form label.",
+                            "type": "string"
+                        },
+                        "buttons_datamodel": {
+                            "description": "Description:\n\n\nNotes:\n",
+                            "type": "string"
+                        }
+                    },
+                    "condition": "Description:\nThis partial view is responsible for rendering the label and buttons/options.\n\nNotes:\nThis partial view is responsible for rendering the label and buttons/options."
+                },
+                "settings": {
+                    "serverId": "572ee3d8-dcd5-4957-8a27-4163f488f913"
+                },
+                "returnDirect": false,
+                "_meta": {
+                    "uiView": "{\"RefId\":null,\"ViewUniqueId\":\"e1a380cd-75d0-4534-ac80-aaa5301718ee\",\"Version\":[1,0],\"Type\":\"partialView\",\"Name\":\"label_and_buttons-1.0.11\",\"Icon\":null,\"Channel\":\"conversation\",\"Description\":\"This partial view is responsible for rendering the label and buttons/options.\",\"Instruction\":\"This partial view is responsible for rendering the label and buttons/options.\",\"AppId\":null,\"ModuleId\":null,\"EnableContextSharing\":true,\"Overrides\":{\"label_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"label_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"label_datamodel\",\"Description\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Instruction\":\"**If data is not a valid html string then convert the value to string.  **Use \\u0060label_datamodel\\u0060 override to pass data to form label.\",\"Value\":null,\"DataType\":\"string\",\"Source\":\"static\"},\"buttons_datamodel\":{\"Type\":\"data\",\"OverrideId\":\"buttons_datamodel\",\"IsMainDataSource\":null,\"ShareAsContext\":true,\"StoreId\":\"buttons_datamodel\",\"Description\":\"\",\"Instruction\":\"\",\"Value\":null,\"DataType\":\"array\",\"Source\":\"static\"}}}",
+                    "type": "partial-view",
+                    "source": "current-module",
+                    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "toolId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+                    "serverName": "module mcp"
+                },
+                "parameters": {
+                    "preText": "",
+                    "postText": "",
+                    "label_datamodel": "{{nodes.intake_orchestration.toolResults.update_contract_agent.label_datamodel}}",
+                    "buttons_datamodel": "{{nodes.intake_orchestration.toolResults.update_contract_agent.buttons_datamodel}}"
+                }
+            },
+            "data": {},
+            "width": 350,
+            "height": 112,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 343.4834048437468,
+                "y": -85.28144801454044
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "flow.isPvRendered",
+                    "operation": "set",
+                    "value": true
+                },
+                {
+                    "fieldName": "thread.intake_orchestration_messages",
+                    "operation": "append",
+                    "value": "PV rendered Successfully",
+                    "role": "tool"
+                }
+            ]
+        },
+        {
+            "id": "gylaa2x",
+            "type": "variable",
+            "name": "variable_0",
+            "description": "",
+            "position": {
+                "x": 1307.890238943039,
+                "y": 313.2247300176016
+            },
+            "deletable": true,
+            "properties": {
+                "retryOnFailure": false,
+                "maxRetries": 6,
+                "retryInterval": 541,
+                "errorHandling": "none",
+                "errorObject": {
+                    "body": "",
+                    "status_code": 500,
+                    "headers": {}
+                }
+            },
+            "config": {},
+            "data": {},
+            "width": 250,
+            "height": 72,
+            "selected": false,
+            "positionAbsolute": {
+                "x": 1307.890238943039,
+                "y": 313.2247300176016
+            },
+            "dragging": false,
+            "variableUpdates": [
+                {
+                    "fieldName": "thread.messages",
+                    "operation": "append",
+                    "value": " ",
+                    "role": "assistant"
+                }
+            ]
+        }
+    ],
+    "edges": [
+        {
+            "id": "reactflow__edge-5oh8s44-output",
+            "source": "5oh8s44",
+            "target": "output",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "agent",
+                "targetType": "output"
+            }
+        },
+        {
+            "id": "5oh8s44-handoff-00529e73-8a09-4732-8557-6c9d49a4e8ba",
+            "source": "5oh8s44",
+            "target": "24gme24",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "00529e73-8a09-4732-8557-6c9d49a4e8ba",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "workflow"
+            }
+        },
+        {
+            "id": "5oh8s44-handoff-5bd0bcf8-92c2-4f70-8070-4ce7690b6416",
+            "source": "5oh8s44",
+            "target": "zs16xel",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "5bd0bcf8-92c2-4f70-8070-4ce7690b6416",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "workflow"
+            }
+        },
+        {
+            "id": "5oh8s44-handoff-9e7fe1bb-d4d7-402d-b4cc-ca06d52e4b06",
+            "source": "5oh8s44",
+            "target": "3tzmutd",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "9e7fe1bb-d4d7-402d-b4cc-ca06d52e4b06",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "workflow"
+            }
+        },
+        {
+            "id": "reactflow__edge-start-2xvbmnn",
+            "source": "start",
+            "target": "2xvbmnn",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "start",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-2xvbmnnr-vgwv3anx-24gme24",
+            "source": "2xvbmnn",
+            "target": "24gme24",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-vgwv3anx",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "workflow"
+            },
+            "selected": false
+        },
+        {
+            "id": "reactflow__edge-2xvbmnnr-else-5oh8s44",
+            "source": "2xvbmnn",
+            "target": "5oh8s44",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-else",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "agent"
+            }
+        },
+        {
+            "id": "reactflow__edge-2xvbmnnr-nmiq382g-3tzmutd",
+            "source": "2xvbmnn",
+            "target": "3tzmutd",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-nmiq382g",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "workflow"
+            },
+            "selected": false
+        },
+        {
+            "id": "5oh8s44-handoff-06171a41-c597-4ae5-8b88-fdab1cff9ff3",
+            "source": "5oh8s44",
+            "target": "65e0exf",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "06171a41-c597-4ae5-8b88-fdab1cff9ff3",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "workflow"
+            }
+        },
+        {
+            "id": "reactflow__edge-2xvbmnnr-mues9coz-65e0exf",
+            "source": "2xvbmnn",
+            "target": "65e0exf",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-mues9coz",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "workflow"
+            }
+        },
+        {
+            "id": "reactflow__edge-2xvbmnnr-zdzeen8e-o6pvvaz",
+            "source": "2xvbmnn",
+            "target": "o6pvvaz",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-zdzeen8e",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "workflow"
+            }
+        },
+        {
+            "id": "5oh8s44-handoff-90a059e1-f6c9-4c5b-81a4-3dbac051eac4",
+            "source": "5oh8s44",
+            "target": "o6pvvaz",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "90a059e1-f6c9-4c5b-81a4-3dbac051eac4",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "workflow"
+            }
+        },
+        {
+            "id": "reactflow__edge-2xvbmnnr-k9uuyztd-zs16xel",
+            "source": "2xvbmnn",
+            "target": "zs16xel",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-k9uuyztd",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "workflow"
+            },
+            "selected": false
+        },
+        {
+            "id": "reactflow__edge-24gme24-0zypxms",
+            "source": "24gme24",
+            "target": "0zypxms",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "workflow",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-zs16xel-0zypxms",
+            "source": "zs16xel",
+            "target": "0zypxms",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "workflow",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-3tzmutd-0zypxms",
+            "source": "3tzmutd",
+            "target": "0zypxms",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "workflow",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-65e0exf-0zypxms",
+            "source": "65e0exf",
+            "target": "0zypxms",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "workflow",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-o6pvvaz-0zypxms",
+            "source": "o6pvvaz",
+            "target": "0zypxms",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "workflow",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-0zypxmsr-else-5oh8s44",
+            "source": "0zypxms",
+            "target": "5oh8s44",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-else",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "agent"
+            }
+        },
+        {
+            "id": "5oh8s44-handoff-5cf7be39-ec88-4e2e-beb6-e25c9269933e",
+            "source": "5oh8s44",
+            "target": "wle0usp",
+            "type": "handoff",
+            "sourceHandle": "handoff",
+            "targetHandle": null,
+            "deletable": false,
+            "data": {
+                "toolId": "5cf7be39-ec88-4e2e-beb6-e25c9269933e",
+                "isHandoff": true,
+                "sourceType": "agent",
+                "targetType": "tool"
+            }
+        },
+        {
+            "id": "reactflow__edge-wle0usp-0zypxms",
+            "source": "wle0usp",
+            "target": "0zypxms",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "tool",
+                "targetType": "rule"
+            }
+        },
+        {
+            "id": "reactflow__edge-0zypxmsr-zd1ihk4s-gylaa2x",
+            "source": "0zypxms",
+            "target": "gylaa2x",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": "r-zd1ihk4s",
+            "targetHandle": null,
+            "data": {
+                "sourceType": "rule",
+                "targetType": "variable"
+            }
+        },
+        {
+            "id": "reactflow__edge-gylaa2x-output",
+            "source": "gylaa2x",
+            "target": "output",
+            "style": {
+                "strokeWidth": 3
+            },
+            "sourceHandle": null,
+            "targetHandle": null,
+            "data": {
+                "sourceType": "variable",
+                "targetType": "output"
+            }
+        }
+    ],
+    "variables": {
+        "flow": [
+            {
+                "id": "var-vd00dwerj",
+                "name": "agentId",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-emq7hofve",
+                "name": "partialViewData",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-ilkam3y1q",
+                "name": "isPvRendered",
+                "type": "boolean",
+                "default": false,
+                "required": false
+            },
+            {
+                "id": "var-n3osw2w7g",
+                "name": "selectedAgentId",
+                "type": "string",
+                "default": "",
+                "required": false
+            },
+            {
+                "id": "var-j1chgu9nk",
+                "name": "currentAgentName",
+                "type": "string",
+                "default": "",
+                "required": false
+            }
+        ],
+        "system": []
+    },
+    "interface": {
+        "inputs": {
+            "query": {
+                "type": "string",
+                "description": "User query to process",
+                "required": true
+            }
+        },
+        "outputs": {
+            "response": {
+                "type": "string",
+                "description": "Final response to the user"
+            }
+        }
+    },
+    "security": {
+        "activities": [
+            {
+                "refId": "11200059",
+                "code": "11200059",
+                "name": "UpdateProcessedInvoiceStatus"
+            },
+            {
+                "refId": "10401051",
+                "code": "10401051",
+                "name": "Execute Contract"
+            }
+        ]
+    },
+    "publishChannels": [
+        {
+            "refId": "api",
+            "code": "api",
+            "name": "API",
+            "description": "Expose the agent as a REST API for system and app integrations"
+        },
+        {
+            "refId": "qi-ui",
+            "code": "qi-ui",
+            "name": "Qi UI",
+            "description": "Make your agent available in GEP’s Qi interface"
+        }
+    ],
+    "skills": [
+        {
+            "id": "skill-86549bf0-ee8c-4200-99eb-723e56e49c58",
+            "name": "Offboard Supplier",
+            "description": "Offboard a supplier",
+            "tags": [
+                "offboard supplier",
+                "offboard supplier details",
+                "offboard supplier by id"
+            ],
+            "examples": [
+                "offboard supplier",
+                "offboard supplier details"
+            ]
+        },
+        {
+            "id": "skill-0953ed09-23d1-441a-9732-721e30090ec2",
+            "name": "Supplier Profile udpate",
+            "description": "Supplier Profile udpate",
+            "tags": [
+                "supplier profile update",
+                "supplier",
+                "supplier amend"
+            ],
+            "examples": [
+                "I want to amend supplier details for supplier",
+                "Update supplier \n",
+                "Want to update supplier profile\n",
+                ""
+            ]
+        },
+        {
+            "id": "skill-008bcb63-20b1-4aff-bace-d42301473b9a",
+            "name": "Contract Terminate",
+            "description": "Terminate Contract",
+            "tags": [
+                "terminate",
+                "terminate contract"
+            ],
+            "examples": [
+                "I want to terminate a contract",
+                "Terminate contract",
+                "I want to terminate a contract for supplier",
+                "terminate contract for supplier"
+            ]
+        },
+        {
+            "id": "skill-5b416a0d-37c8-4942-8bca-4c8e9ac0d791",
+            "name": "Contract Extension",
+            "description": "Extend Contract",
+            "tags": [
+                "extend contract",
+                "contract extension"
+            ],
+            "examples": [
+                "I want to extend a contract",
+                "extend contract",
+                "I want to extend a contract for supplier",
+                "extend contract for supplier"
+            ]
+        },
+        {
+            "id": "skill-acfa1db0-43c3-4021-932f-ab19bc14951b",
+            "name": "Contract Amendment",
+            "description": "Amend Contract",
+            "tags": [
+                "amend contract"
+            ],
+            "examples": [
+                "I want to amend a contract",
+                "Amend contract",
+                "I want to amend a contract for supplier",
+                "amend contract for supplier"
+            ]
+        }
+    ],
+    "createdBy": "parth.suthar@gep.com",
+    "createdOn": "2026-02-04T13:14:59.184Z",
+    "updatedBy": "parth.suthar@gep.com",
+    "updatedOn": "2026-02-04T13:14:59.184Z",
+    "environment": "DEV",
+    "appId": "98bed795-a280-4672-86ad-d13fa7aa83a9",
+    "moduleId": "572ee3d8-dcd5-4957-8a27-4163f488f913",
+    "version": "v1770346099216925400"
+}

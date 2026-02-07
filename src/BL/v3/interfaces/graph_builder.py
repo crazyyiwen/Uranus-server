@@ -8,9 +8,9 @@ class IGraphBuilder(ABC):
     """Interface for building LangGraph graphs from JSON definitions."""
 
     @abstractmethod
-    def build(self, workflow_definition: Dict[str, Any]) -> Any:
+    async def build(self, workflow_definition: Dict[str, Any]) -> Any:
         """
-        Build a LangGraph graph from workflow definition.
+        Build a LangGraph graph from workflow definition (async).
 
         Args:
             workflow_definition: Complete workflow JSON definition
@@ -21,11 +21,11 @@ class IGraphBuilder(ABC):
         pass
 
     @abstractmethod
-    def build_workflow_node(
+    async def build_workflow_node(
         self, workflow_id: str, workflow_config: Dict[str, Any]
     ) -> Any:
         """
-        Build a workflow node (subgraph/handoff/tool) recursively.
+        Build a workflow node (subgraph/handoff/tool) recursively (async).
 
         Args:
             workflow_id: ID of the workflow to load

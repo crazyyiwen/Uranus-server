@@ -40,9 +40,9 @@ class WorkflowGraphBuilder(IGraphBuilder):
         self._graph_cache: Dict[str, Any] = {}
         self._build_stack: Set[str] = set()  # Track workflows being built (cycle detection)
 
-    def build(self, workflow_definition: Dict[str, Any]) -> Any:
+    async def build(self, workflow_definition: Dict[str, Any]) -> Any:
         """
-        Build a LangGraph graph from workflow definition.
+        Build a LangGraph graph from workflow definition (async).
 
         Args:
             workflow_definition: Complete workflow JSON definition
@@ -68,11 +68,11 @@ class WorkflowGraphBuilder(IGraphBuilder):
         finally:
             self._build_stack.remove(workflow_id)
 
-    def build_workflow_node(
+    async def build_workflow_node(
         self, workflow_id: str, workflow_config: Dict[str, Any]
     ) -> Any:
         """
-        Build a workflow node (subgraph/handoff/tool) recursively.
+        Build a workflow node (subgraph/handoff/tool) recursively (async).
 
         Args:
             workflow_id: ID of the workflow to load
@@ -86,8 +86,8 @@ class WorkflowGraphBuilder(IGraphBuilder):
         if not workflow_def:
             raise ValueError(f"Workflow {workflow_id} not found")
 
-        # Build the workflow graph
-        workflow_graph = self.build(workflow_def)
+        # Build the workflow graph (async)
+        workflow_graph = await self.build(workflow_def)
 
         # Return async callable node function
         async def workflow_node_fn(state: WorkflowState) -> WorkflowState:
@@ -131,14 +131,11 @@ class WorkflowGraphBuilder(IGraphBuilder):
                 nodes_by_type[node_type] = []
             nodes_by_type[node_type].append(node)
 
-        # Determine which node IDs are targets of handoff edges
-        handoff_targets = {
-            e.get("target")
-            for e in edges
-            if e.get("type") == "handoff" and e.get("target")
-        }
-
-        # Build node functions for all nodes except start/output
+        # Build node functions for all nodes except start/output.
+        # Add all node types (agent, llm, rule, tool, workflow, etc.) so that edges
+        # between them are valid; previously we only added handoff tool/workflow nodes,
+        # which caused "Found edge starting at unknown node" when an edge started at
+        # a non-handoff tool (e.g. v83ozem).
         node_functions = {}
         for node in nodes:
             node_id = node["id"]
@@ -148,37 +145,14 @@ class WorkflowGraphBuilder(IGraphBuilder):
             if node_type in ["start", "output"]:
                 continue
 
-            # Workflow nodes: only add to the graph if they represent a handoff target
-            # (either targeted by a handoff edge, or explicitly marked as handoff in config)
-            if node_type == "workflow":
-                wf_cfg = node.get("config", {}) or {}
-                is_handoff_workflow = (
-                    node_id in handoff_targets
-                    or wf_cfg.get("type") == "handoff"
-                    or wf_cfg.get("nodeType") == "handoff"
-                )
-                if not is_handoff_workflow:
-                    continue
-
-            # Tool nodes: only add to the graph if they represent a handoff target
-            # (either targeted by a handoff edge, or explicitly marked as handoff in config)
-            if node_type == "tool":
-                tool_cfg = node.get("config", {}) or {}
-                is_handoff_tool = (
-                    node_id in handoff_targets
-                    or tool_cfg.get("type") == "handoff"
-                    or tool_cfg.get("toolId") == "tool-handoff"
-                )
-                if not is_handoff_tool:
-                    continue
-
             # Build node function
             node_fn = self._build_node_function(node, nodes_by_id)
             node_functions[node_id] = node_fn
             graph.add_node(node_id, node_fn)
 
-        # Build edges
-        self._build_edges(graph, edges, nodes_by_id, nodes_by_type)
+        # Build edges (only from nodes that were added to the graph)
+        added_node_ids = set(node_functions.keys())
+        self._build_edges(graph, edges, nodes_by_id, nodes_by_type, added_node_ids)
 
         # Set entry point
         start_nodes = nodes_by_type.get("start", [])
@@ -208,11 +182,19 @@ class WorkflowGraphBuilder(IGraphBuilder):
 
         async def node_fn(state: WorkflowState) -> WorkflowState:
             """Execute node and return updated state (async)."""
-            result = await executor.execute(node, state)
+            # Enrich state with node definitions so variable resolution can reference
+            # other nodes' config/definition (e.g. {{nodes.<id>.config.xyz}}) even when
+            # that node has not run yet. nodes_by_id is used by the variable resolver
+            # when resolving nodes.* expressions.
+            state_with_graph = {**state, "_graph_nodes_by_id": nodes_by_id}
+            result = await executor.execute(node, state_with_graph)
 
             # Extract output and updated state
             node_output = result.get("output", {})
-            updated_state = result.get("state", state)
+            updated_state = result.get("state", state_with_graph)
+
+            # Strip internal graph context before returning (do not leak into workflow state)
+            updated_state.pop("_graph_nodes_by_id", None)
 
             # Store node output in state
             if "nodes" not in updated_state:
@@ -229,8 +211,9 @@ class WorkflowGraphBuilder(IGraphBuilder):
         edges: List[Dict[str, Any]],
         nodes_by_id: Dict[str, Any],
         nodes_by_type: Dict[str, List[Dict[str, Any]]],
+        added_node_ids: Set[str],
     ) -> None:
-        """Build edges in the graph."""
+        """Build edges in the graph. Only adds edges from nodes that are in added_node_ids."""
         # Group edges by source (excluding start node edges)
         edges_by_source: Dict[str, List[Dict[str, Any]]] = {}
         for edge in edges:
@@ -241,10 +224,12 @@ class WorkflowGraphBuilder(IGraphBuilder):
                 edges_by_source[source] = []
             edges_by_source[source].append(edge)
 
-        # Handle rule nodes first - they need conditional edges
+        # Handle rule nodes first - they need conditional edges (only if rule was added)
         rule_nodes = nodes_by_type.get("rule", [])
         for rule_node in rule_nodes:
             rule_id = rule_node["id"]
+            if rule_id not in added_node_ids:
+                continue
             rule_config = rule_node.get("config", {})
             rules = rule_config.get("rules", [])
 
@@ -283,8 +268,10 @@ class WorkflowGraphBuilder(IGraphBuilder):
 
                 graph.add_conditional_edges(rule_id, build_rule_router(rules, rule_edges))
 
-        # Handle regular edges (non-rule, non-handoff)
+        # Handle regular edges (non-rule, non-handoff). Skip sources not in graph.
         for source_id, source_edges in edges_by_source.items():
+            if source_id not in added_node_ids:
+                continue
             source_node = nodes_by_id.get(source_id)
             if not source_node:
                 continue
@@ -303,7 +290,7 @@ class WorkflowGraphBuilder(IGraphBuilder):
                     continue
                 if target == "output" or nodes_by_id.get(target, {}).get("type") == "output":
                     graph.add_edge(source_id, END)
-                else:
+                elif target in added_node_ids:
                     graph.add_edge(source_id, target)
 
             # Regular edges (non-handoff)
@@ -313,38 +300,32 @@ class WorkflowGraphBuilder(IGraphBuilder):
                 continue
 
             if len(regular_edges) == 1:
-                # Single edge - direct connection
+                # Single edge - direct connection (target must be in graph or END)
                 target = regular_edges[0].get("target")
                 target_node = nodes_by_id.get(target, {})
                 if target == "output" or target_node.get("type") == "output":
                     graph.add_edge(source_id, END)
-                else:
+                elif target in added_node_ids:
                     graph.add_edge(source_id, target)
             else:
-                # Multiple edges - route to first non-rule target, or use conditional
-                # Check if any target is a rule node
+                # Multiple edges - route to first non-rule target (must be in graph)
                 rule_targets = [
                     e.get("target")
                     for e in regular_edges
                     if nodes_by_id.get(e.get("target", ""), {}).get("type") == "rule"
+                    and e.get("target") in added_node_ids
                 ]
 
                 if rule_targets:
-                    # Route to first rule node
                     graph.add_edge(source_id, rule_targets[0])
                 else:
-                    # Route to first target (could be enhanced with conditional logic)
                     target = regular_edges[0].get("target")
                     if target == "output" or nodes_by_id.get(target, {}).get("type") == "output":
                         graph.add_edge(source_id, END)
-                    else:
+                    elif target in added_node_ids:
                         graph.add_edge(source_id, target)
 
-        # Handle output nodes - always go to END
-        output_nodes = nodes_by_type.get("output", [])
-        for output_node in output_nodes:
-            output_id = output_node["id"]
-            graph.add_edge(output_id, END)
+        # Output nodes are not added to the graph; edges to output are already END above
 
     def _default_workflow_loader(self, workflow_id: str) -> Optional[Dict[str, Any]]:
         """Default workflow loader - loads from JSON files."""

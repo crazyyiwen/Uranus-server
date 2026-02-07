@@ -84,15 +84,23 @@ class VariableResolver(IVariableResolver):
                 return system.get(parts[1], "")
             return self._nested_get(system, parts[1:], "")
 
-        # Handle node outputs: nodes.nodeId.field
+        # Handle node outputs or node definitions: nodes.nodeId.field
+        # Prefer state["nodes"] (executed node outputs); fall back to _graph_nodes_by_id
+        # (workflow node definitions) when the node has not run yet or when referencing
+        # definition fields (config, id, type, properties, data).
         if parts[0] == "nodes" and len(parts) >= 2:
-            nodes = state.get("nodes", {})
             node_id = parts[1]
-            if node_id in nodes:
-                node_output = nodes[node_id]
+            nodes_outputs = state.get("nodes", {})
+            nodes_defs = state.get("_graph_nodes_by_id", {})
+            node_data = None
+            if node_id in nodes_outputs:
+                node_data = nodes_outputs[node_id]
+            if node_data is None and node_id in nodes_defs:
+                node_data = nodes_defs[node_id]
+            if node_data is not None:
                 if len(parts) == 2:
-                    return node_output
-                return self._nested_get(node_output, parts[2:], "")
+                    return node_data
+                return self._nested_get(node_data, parts[2:], "")
 
         # Handle nodeOutput (current node output)
         if parts[0] == "nodeOutput":
